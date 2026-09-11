@@ -1,4 +1,5 @@
 import Clutter from 'gi://Clutter';
+import Gio from 'gi://Gio';
 import GObject from 'gi://GObject';
 import St from 'gi://St';
 
@@ -14,6 +15,8 @@ const CURRENCY_SYMBOLS: Record<string, string> = {
     USD: '$',
 };
 
+const USAGE_URL = 'https://platform.deepseek.com/usage';
+
 export class UsageIndicator extends PanelMenu.Button {
     static {
         GObject.registerClass({GTypeName: 'DeepSeekUsageIndicator'}, this);
@@ -26,8 +29,21 @@ export class UsageIndicator extends PanelMenu.Button {
     private readonly toppedUpItem: PopupMenu.PopupMenuItem;
     private readonly updatedItem: PopupMenu.PopupMenuItem;
 
-    constructor(private readonly service: UsageService) {
+    private readonly linkIcon: St.Icon;
+    private readonly stSettings = St.Settings.get();
+    private readonly colorSchemeId: number;
+
+    constructor(
+        private readonly service: UsageService,
+        private readonly iconsDir: string
+    ) {
         super(0.0, 'DeepSeek Usage');
+
+        this.linkIcon = new St.Icon({icon_size: 16});
+        this.updateLinkIcon();
+        this.colorSchemeId = this.stSettings.connect('notify::color-scheme', () => {
+            this.updateLinkIcon();
+        });
 
         this.panelLabel = new St.Label({
             text: 'DeepSeek',
@@ -43,17 +59,54 @@ export class UsageIndicator extends PanelMenu.Button {
         this.popupMenu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
         this.updatedItem = this.addInfoItem('Updated: never');
 
-        const refreshItem = new PopupMenu.PopupMenuItem('Refresh now');
-        refreshItem.connect('activate', () => {
+        const actionsItem = new PopupMenu.PopupMenuItem('', {reactive: false, can_focus: false});
+        actionsItem.label.hide();
+        actionsItem.add_style_class_name('deepseek-actions');
+
+        const actionsBox = new St.BoxLayout({x_expand: true});
+        actionsItem.add_child(actionsBox);
+
+        const refreshButton = new St.Button({
+            label: 'Refresh now',
+            x_expand: true,
+            style_class: 'deepseek-action-button',
+        });
+        refreshButton.connect('clicked', () => {
             this.service.refresh();
         });
-        this.popupMenu.addMenuItem(refreshItem);
+        actionsBox.add_child(refreshButton);
+
+        const linkButton = new St.Button({
+            child: this.linkIcon,
+            style_class: 'deepseek-action-button deepseek-link-button',
+        });
+        linkButton.connect('clicked', () => {
+            Gio.AppInfo.launch_default_for_uri(USAGE_URL, null);
+        });
+        actionsBox.add_child(linkButton);
+
+        this.popupMenu.addMenuItem(actionsItem);
 
         this.update(this.service.getSnapshot());
     }
 
     private get popupMenu(): PopupMenu.PopupMenu {
         return this.menu as PopupMenu.PopupMenu;
+    }
+
+    private updateLinkIcon(): void {
+        const file =
+            this.stSettings.color_scheme === St.SystemColorScheme.PREFER_LIGHT
+                ? 'deepseek-light.svg'
+                : 'deepseek-dark.svg';
+        this.linkIcon.set_gicon(
+            Gio.icon_new_for_string(`${this.iconsDir}/${file}`) as unknown as St.Icon['gicon']
+        );
+    }
+
+    override destroy(): void {
+        this.stSettings.disconnect(this.colorSchemeId);
+        super.destroy();
     }
 
     private addInfoItem(text: string): PopupMenu.PopupMenuItem {

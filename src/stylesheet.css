@@ -1,0 +1,18 @@
+.deepseek-actions {
+    padding: 4px 6px;
+}
+
+.deepseek-action-button {
+    border-radius: 8px;
+    padding: 5px 10px;
+    color: inherit;
+}
+
+.deepseek-action-button:hover,
+.deepseek-action-button:focus {
+    background-color: rgba(255, 255, 255, 0.12);
+}
+
+.deepseek-link-button {
+    padding: 5px 8px;
+}

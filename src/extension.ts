@@ -26,7 +26,7 @@ export default class GnomeDeepseekUsage extends Extension {
         this.service = new UsageService();
         this.service.addProvider(new DeepSeekBalanceProvider(this.client));
 
-        this.indicator = new UsageIndicator(this.service);
+        this.indicator = new UsageIndicator(this.service, `${this.path}/icons`);
         Main.panel.addToStatusArea(this.uuid, this.indicator);
 
         this.disconnect = this.service.connect(snapshot => this.indicator?.update(snapshot));
