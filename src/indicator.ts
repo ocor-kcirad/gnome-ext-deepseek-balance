@@ -1,4 +1,5 @@
 import Clutter from 'gi://Clutter';
+import GObject from 'gi://GObject';
 import St from 'gi://St';
 
 import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
@@ -14,6 +15,10 @@ const CURRENCY_SYMBOLS: Record<string, string> = {
 };
 
 export class UsageIndicator extends PanelMenu.Button {
+    static {
+        GObject.registerClass({GTypeName: 'DeepSeekUsageIndicator'}, this);
+    }
+
     private readonly panelLabel: St.Label;
     private readonly statusItem: PopupMenu.PopupMenuItem;
     private readonly totalItem: PopupMenu.PopupMenuItem;
