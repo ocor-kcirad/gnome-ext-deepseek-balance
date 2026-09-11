@@ -1,5 +1,5 @@
 {
-  "name": "gnome-deepseek-usage",
+  "name": "DeepSeek Usage",
   "description": "A seamless top-bar indicator for DeepSeek usage monitoring.",
   "uuid": "d82d4b96-48b6-4b2a-a25e-389f41757827",
   "shell-version": [
