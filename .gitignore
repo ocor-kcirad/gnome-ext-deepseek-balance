@@ -1,8 +1,20 @@
-*.gresource*
-*.shell-extension/
-*.zip
-*~
+# Dependencies
+node_modules/
+
+# Build output
 dist/
+*.zip
+*.shell-extension/
+*.gresource*
 gschemas.compiled
 locale/
-node_modules/
+
+# Logs and caches
+npm-debug.log*
+yarn-error.log*
+.eslintcache
+
+# Editor and OS files
+*~
+*.swp
+.DS_Store
