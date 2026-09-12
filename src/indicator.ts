@@ -1,5 +1,6 @@
 import Clutter from 'gi://Clutter';
 import Gio from 'gi://Gio';
+import GLib from 'gi://GLib';
 import GObject from 'gi://GObject';
 import St from 'gi://St';
 
@@ -32,6 +33,8 @@ export class UsageIndicator extends PanelMenu.Button {
     private readonly linkIcon: St.Icon;
     private readonly stSettings = St.Settings.get();
     private readonly colorSchemeId: number;
+    private readonly updatedTimerId: number;
+    private snapshot: UsageSnapshot = {balance: null, updatedAt: null, error: null};
 
     constructor(
         private readonly service: UsageService,
@@ -57,7 +60,7 @@ export class UsageIndicator extends PanelMenu.Button {
         this.toppedUpItem = this.addInfoItem('Topped-up balance: —');
 
         this.popupMenu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
-        this.updatedItem = this.addInfoItem('Updated: never');
+        this.updatedItem = this.addInfoItem('Updated never');
 
         const actionsItem = new PopupMenu.PopupMenuItem('', {reactive: false, can_focus: false});
         actionsItem.label.hide();
@@ -87,6 +90,11 @@ export class UsageIndicator extends PanelMenu.Button {
 
         this.popupMenu.addMenuItem(actionsItem);
 
+        this.updatedTimerId = GLib.timeout_add_seconds(GLib.PRIORITY_DEFAULT, 30, () => {
+            this.updateUpdatedLabel();
+            return GLib.SOURCE_CONTINUE;
+        });
+
         this.update(this.service.getSnapshot());
     }
 
@@ -104,7 +112,12 @@ export class UsageIndicator extends PanelMenu.Button {
         );
     }
 
+    private updateUpdatedLabel(): void {
+        this.updatedItem.label.set_text(`Updated ${formatRelativeTime(this.snapshot.updatedAt)}`);
+    }
+
     override destroy(): void {
+        if (this.updatedTimerId) GLib.source_remove(this.updatedTimerId);
         this.stSettings.disconnect(this.colorSchemeId);
         super.destroy();
     }
@@ -117,6 +130,7 @@ export class UsageIndicator extends PanelMenu.Button {
     }
 
     update(snapshot: UsageSnapshot): void {
+        this.snapshot = snapshot;
         const {balance, error} = snapshot;
         const info = selectBalance(balance?.balance_infos ?? []);
 
@@ -127,7 +141,7 @@ export class UsageIndicator extends PanelMenu.Button {
         this.totalItem.label.set_text(`Total balance: ${amountText(info, 'total_balance')}`);
         this.grantedItem.label.set_text(`Granted balance: ${amountText(info, 'granted_balance')}`);
         this.toppedUpItem.label.set_text(`Topped-up balance: ${amountText(info, 'topped_up_balance')}`);
-        this.updatedItem.label.set_text(`Updated: ${formatUpdated(snapshot.updatedAt)}`);
+        this.updateUpdatedLabel();
     }
 }
 
@@ -153,7 +167,29 @@ function statusText(balance: UserBalance | null, error: string | null): string {
     return balance.is_available ? 'Available' : 'Insufficient balance';
 }
 
-function formatUpdated(updatedAt: number | null): string {
+function formatRelativeTime(updatedAt: number | null): string {
     if (!updatedAt) return 'never';
-    return new Date(updatedAt).toLocaleString();
+
+    const seconds = Math.max(0, Math.floor((Date.now() - updatedAt) / 1000));
+
+    if (seconds < 5) return 'just now';
+    if (seconds < 60) return `${seconds} ${seconds === 1 ? 'sec' : 'secs'} ago`;
+
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `${minutes} ${minutes === 1 ? 'min' : 'mins'} ago`;
+
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours} ${hours === 1 ? 'hr' : 'hrs'} ago`;
+
+    const days = Math.floor(hours / 24);
+    if (days < 7) return `${days} ${days === 1 ? 'day' : 'days'} ago`;
+
+    const weeks = Math.floor(days / 7);
+    if (weeks < 5) return `${weeks} ${weeks === 1 ? 'wk' : 'wks'} ago`;
+
+    const months = Math.floor(days / 30);
+    if (months < 12) return `${months} ${months === 1 ? 'mo' : 'mos'} ago`;
+
+    const years = Math.floor(days / 365);
+    return `${years} ${years === 1 ? 'yr' : 'yrs'} ago`;
 }
