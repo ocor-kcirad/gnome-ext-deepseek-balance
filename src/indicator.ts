@@ -27,9 +27,8 @@ export class UsageIndicator extends PanelMenu.Button {
     private readonly panelLabel: St.Label;
     private readonly statusIcon: St.Icon;
     private readonly statusTooltip: Tooltip;
-    private readonly totalItem: PopupMenu.PopupMenuItem;
-    private readonly grantedItem: PopupMenu.PopupMenuItem;
-    private readonly toppedUpItem: PopupMenu.PopupMenuItem;
+    private readonly totalValueLabel: St.Label;
+    private readonly totalTooltip: Tooltip;
     private readonly updatedItem: PopupMenu.PopupMenuItem;
 
     private readonly linkIcon: St.Icon;
@@ -79,9 +78,28 @@ export class UsageIndicator extends PanelMenu.Button {
         this.popupMenu.addMenuItem(statusItem);
         this.popupMenu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
 
-        this.totalItem = this.addInfoItem('Total balance: —');
-        this.grantedItem = this.addInfoItem('Granted balance: —');
-        this.toppedUpItem = this.addInfoItem('Topped-up balance: —');
+        const totalHeadingItem = new PopupMenu.PopupMenuItem('Total Balance:', {
+            reactive: false,
+            can_focus: false,
+        });
+        totalHeadingItem.label.add_style_class_name('deepseek-total-heading');
+        this.popupMenu.addMenuItem(totalHeadingItem);
+
+        this.totalValueLabel = new St.Label({
+            text: '—',
+            x_expand: true,
+            x_align: Clutter.ActorAlign.CENTER,
+            style_class: 'deepseek-total-value',
+            reactive: true,
+        });
+        const totalValueItem = new PopupMenu.PopupMenuItem('', {
+            reactive: false,
+            can_focus: false,
+        });
+        totalValueItem.label.hide();
+        totalValueItem.add_child(this.totalValueLabel);
+        this.popupMenu.addMenuItem(totalValueItem);
+        this.totalTooltip = new Tooltip(this.totalValueLabel);
 
         this.popupMenu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
 
@@ -125,14 +143,8 @@ export class UsageIndicator extends PanelMenu.Button {
         if (this.updatedTimerId) GLib.source_remove(this.updatedTimerId);
         this.stSettings.disconnect(this.colorSchemeId);
         this.statusTooltip.destroy();
+        this.totalTooltip.destroy();
         super.destroy();
-    }
-
-    private addInfoItem(text: string): PopupMenu.PopupMenuItem {
-        const item = new PopupMenu.PopupMenuItem(text);
-        item.setSensitive(false);
-        this.popupMenu.addMenuItem(item);
-        return item;
     }
 
     update(snapshot: UsageSnapshot): void {
@@ -147,9 +159,11 @@ export class UsageIndicator extends PanelMenu.Button {
         this.statusIcon.set_style_class_name(`deepseek-status-icon deepseek-status-${state}`);
         this.statusIcon.set_accessible_name(text);
         this.statusTooltip.set_text(text);
-        this.totalItem.label.set_text(`Total balance: ${amountText(info, 'total_balance')}`);
-        this.grantedItem.label.set_text(`Granted balance: ${amountText(info, 'granted_balance')}`);
-        this.toppedUpItem.label.set_text(`Topped-up balance: ${amountText(info, 'topped_up_balance')}`);
+        this.totalValueLabel.set_text(amountText(info, 'total_balance'));
+        this.totalTooltip.set_text(
+            `Granted balance: ${amountText(info, 'granted_balance')}\n` +
+                `Topped-up balance: ${amountText(info, 'topped_up_balance')}`
+        );
         this.updateUpdatedLabel();
     }
 }

@@ -18,6 +18,15 @@
     text-align: center;
 }
 
+.deepseek-total-heading {
+    opacity: 0.8;
+}
+
+.deepseek-total-value {
+    font-size: 28px;
+    font-weight: bold;
+}
+
 .deepseek-status-icon {
     margin: 0 4px;
 }
