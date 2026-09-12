@@ -86,6 +86,8 @@ export class UsageIndicator extends PanelMenu.Button {
         this.popupMenu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
 
         this.updatedItem = new PopupMenu.PopupMenuItem('Updated never');
+        this.updatedItem.label.x_expand = true;
+        this.updatedItem.label.x_align = Clutter.ActorAlign.CENTER;
         this.updatedItem.label.add_style_class_name('deepseek-updated');
         this.updatedItem.set_accessible_name('Refresh balance');
         this.updatedItem.connect('activate', () => {
