@@ -2,7 +2,7 @@
 
 ## Project
 
-GNOME Shell extension `DeepSeek Usage` — a top-bar indicator for DeepSeek balance. Scaffolded with `create-gnome-extension` (TypeScript). `metadata.json` declares `shell-version: ["50"]`, but the installed `@girs/gnome-shell` type package is v46, so newer shell APIs may lack type definitions.
+GNOME Shell extension `DeepSeek Balance` — a top-bar indicator for DeepSeek balance. Scaffolded with `create-gnome-extension` (TypeScript). `metadata.json` declares `shell-version: ["50"]`, but the installed `@girs/gnome-shell` type package is v46, so newer shell APIs may lack type definitions.
 
 ## Commands
 

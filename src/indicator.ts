@@ -40,7 +40,7 @@ export class UsageIndicator extends PanelMenu.Button {
         private readonly service: UsageService,
         private readonly iconsDir: string
     ) {
-        super(0.0, 'DeepSeek Usage');
+        super(0.0, 'DeepSeek Balance');
 
         this.linkIcon = new St.Icon({icon_size: 16});
         this.updateIcons();
