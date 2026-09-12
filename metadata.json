@@ -1,10 +1,10 @@
 {
   "name": "DeepSeek Balance",
-  "description": "A seamless top-bar indicator for DeepSeek usage monitoring.",
-  "uuid": "d82d4b96-48b6-4b2a-a25e-389f41757827",
+  "description": "A seamless top-bar indicator for DeepSeek balance monitoring",
+  "uuid": "deepseek-balance@ocor-kcirad",
   "shell-version": [
     "50"
   ],
-  "settings-schema": "org.gnome.shell.extensions.gnome-deepseek-usage",
+  "settings-schema": "org.gnome.shell.extensions.gnome-deepseek-balance",
   "version-name": "1.0.0"
 }

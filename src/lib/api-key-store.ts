@@ -6,7 +6,7 @@ Gio._promisify(Secret, 'password_store', 'password_store_finish');
 Gio._promisify(Secret, 'password_clear', 'password_clear_finish');
 
 const SCHEMA = Secret.Schema.new(
-    'org.gnome.shell.extensions.gnome-deepseek-usage',
+    'org.gnome.shell.extensions.gnome-deepseek-balance',
     Secret.SchemaFlags.NONE,
     {
         purpose: Secret.SchemaAttributeType.STRING,
