@@ -15,20 +15,60 @@ A GNOME Shell extension that shows your DeepSeek balance in the top bar.
 - A DeepSeek API key: https://platform.deepseek.com/api_keys
 - For building: `zip`, `glib-compile-schemas`, and `gnome-extensions` on `PATH`
 
-## Build & install
+## Installation
+
+### Quick deploy (from source)
+
+Builds and installs the extension into your user extensions directory in one step:
 
 ```sh
 npm install
 npm run build:install
 ```
 
-Then log out and back in so GNOME Shell picks up the extension, enable it, and add
-your API key in its preferences:
+Then reload GNOME Shell and enable the extension:
+
+- Wayland: log out and back in (the shell can't be restarted in place).
+- X11 + unsafe mode: `npm run build:dev` builds, installs, and restarts the shell.
 
 ```sh
 gnome-extensions enable deepseek-balance@ocor-kcirad
-gnome-extensions prefs deepseek-balance@ocor-kcirad
+gnome-extensions prefs deepseek-balance@ocor-kcirad   # add your API key
 ```
+
+You can also toggle it and open its settings from the GNOME Extensions app.
+
+### Manual installation
+
+1. Build the package:
+
+   ```sh
+   npm install
+   npm run build
+   ```
+
+   This produces `deepseek-balance@ocor-kcirad.shell-extension.zip` in the project root.
+
+2. Install it with `gnome-extensions`:
+
+   ```sh
+   gnome-extensions install --force deepseek-balance@ocor-kcirad.shell-extension.zip
+   ```
+
+   Or copy the built files into the user extensions directory:
+
+   ```sh
+   EXT_DIR=~/.local/share/gnome-shell/extensions/deepseek-balance@ocor-kcirad
+   mkdir -p "$EXT_DIR"
+   cp -r dist/. "$EXT_DIR/"
+   cp metadata.json "$EXT_DIR/"
+   ```
+
+3. Reload GNOME Shell (log out and back in on Wayland) and enable it:
+
+   ```sh
+   gnome-extensions enable deepseek-balance@ocor-kcirad
+   ```
 
 ## Configuration
 
