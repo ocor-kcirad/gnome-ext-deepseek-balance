@@ -87,13 +87,20 @@ export class UsageIndicator extends PanelMenu.Button {
         this.popupMenu.addMenuItem(statusItem);
         this.popupMenu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
 
-        const totalHeadingItem = new PopupMenu.PopupMenuItem('Total Balance:', {
-            reactive: false,
-            can_focus: false,
+        const totalBox = new St.BoxLayout({
+            vertical: true,
+            x_expand: true,
+            reactive: true,
+            style_class: 'deepseek-total',
         });
-        totalHeadingItem.label.add_style_class_name('deepseek-total-heading');
-        this.popupMenu.addMenuItem(totalHeadingItem);
-
+        totalBox.add_child(
+            new St.Label({
+                text: 'Total Balance:',
+                x_expand: true,
+                reactive: true,
+                style_class: 'deepseek-total-heading',
+            })
+        );
         this.totalValueLabel = new St.Label({
             text: '—',
             x_expand: true,
@@ -101,13 +108,8 @@ export class UsageIndicator extends PanelMenu.Button {
             style_class: 'deepseek-total-value',
             reactive: true,
         });
-        const totalValueItem = new PopupMenu.PopupMenuItem('', {
-            reactive: false,
-            can_focus: false,
-        });
-        totalValueItem.label.hide();
-        totalValueItem.add_child(this.totalValueLabel);
-        this.popupMenu.addMenuItem(totalValueItem);
+        totalBox.add_child(this.totalValueLabel);
+        this.popupMenu.box.add_child(totalBox);
         this.totalTooltip = new Tooltip(this.totalValueLabel);
 
         this.popupMenu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());

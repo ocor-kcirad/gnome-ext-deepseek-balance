@@ -18,6 +18,10 @@
     text-align: center;
 }
 
+.deepseek-total {
+    padding: 6px 16px 10px;
+}
+
 .deepseek-total-heading {
     opacity: 0.8;
 }
