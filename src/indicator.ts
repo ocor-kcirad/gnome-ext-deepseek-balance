@@ -8,6 +8,7 @@ import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
 import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
 
 import type {BalanceInfo, UserBalance} from './lib/deepseek/types.js';
+import {Tooltip} from './lib/tooltip.js';
 import type {UsageService} from './lib/usage/service.js';
 import type {UsageSnapshot} from './lib/usage/types.js';
 
@@ -24,7 +25,8 @@ export class UsageIndicator extends PanelMenu.Button {
     }
 
     private readonly panelLabel: St.Label;
-    private readonly statusItem: PopupMenu.PopupMenuItem;
+    private readonly statusIcon: St.Icon;
+    private readonly statusTooltip: Tooltip;
     private readonly totalItem: PopupMenu.PopupMenuItem;
     private readonly grantedItem: PopupMenu.PopupMenuItem;
     private readonly toppedUpItem: PopupMenu.PopupMenuItem;
@@ -56,7 +58,17 @@ export class UsageIndicator extends PanelMenu.Button {
         });
         this.add_child(this.panelLabel);
 
-        this.statusItem = this.addInfoItem('Status: —');
+        const statusItem = new PopupMenu.PopupMenuItem('', {reactive: true});
+        statusItem.label.hide();
+        statusItem.track_hover = true;
+        this.statusIcon = new St.Icon({
+            icon_size: 16,
+            style_class: 'deepseek-status-icon',
+        });
+        statusItem.add_child(this.statusIcon);
+        this.statusTooltip = new Tooltip(statusItem);
+        this.popupMenu.addMenuItem(statusItem);
+
         this.totalItem = this.addInfoItem('Total balance: —');
         this.grantedItem = this.addInfoItem('Granted balance: —');
         this.toppedUpItem = this.addInfoItem('Topped-up balance: —');
@@ -130,6 +142,7 @@ export class UsageIndicator extends PanelMenu.Button {
     override destroy(): void {
         if (this.updatedTimerId) GLib.source_remove(this.updatedTimerId);
         this.stSettings.disconnect(this.colorSchemeId);
+        this.statusTooltip.destroy();
         super.destroy();
     }
 
@@ -148,7 +161,11 @@ export class UsageIndicator extends PanelMenu.Button {
         this.panelLabel.set_text(
             info ? formatAmount(info.currency, info.total_balance) : error ? '⚠ DeepSeek' : 'DeepSeek'
         );
-        this.statusItem.label.set_text(`Status: ${statusText(balance, error)}`);
+        const {state, text} = statusState(balance, error);
+        this.statusIcon.set_icon_name(STATUS_ICONS[state]);
+        this.statusIcon.set_style_class_name(`deepseek-status-icon deepseek-status-${state}`);
+        this.statusIcon.set_accessible_name(text);
+        this.statusTooltip.set_text(text);
         this.totalItem.label.set_text(`Total balance: ${amountText(info, 'total_balance')}`);
         this.grantedItem.label.set_text(`Granted balance: ${amountText(info, 'granted_balance')}`);
         this.toppedUpItem.label.set_text(`Topped-up balance: ${amountText(info, 'topped_up_balance')}`);
@@ -172,10 +189,24 @@ function formatAmount(currency: string, amount: string): string {
     return `${symbol}${amount}`;
 }
 
-function statusText(balance: UserBalance | null, error: string | null): string {
-    if (error) return error;
-    if (!balance) return 'No data';
-    return balance.is_available ? 'Available' : 'Insufficient balance';
+type StatusState = 'available' | 'insufficient' | 'nodata' | 'error';
+
+const STATUS_ICONS: Record<StatusState, string> = {
+    available: 'object-select-symbolic',
+    insufficient: 'dialog-warning-symbolic',
+    nodata: 'dialog-question-symbolic',
+    error: 'dialog-error-symbolic',
+};
+
+function statusState(
+    balance: UserBalance | null,
+    error: string | null
+): {state: StatusState; text: string} {
+    if (error) return {state: 'error', text: `Error: ${error}`};
+    if (!balance) return {state: 'nodata', text: 'No data'};
+    return balance.is_available
+        ? {state: 'available', text: 'Available'}
+        : {state: 'insufficient', text: 'Insufficient balance'};
 }
 
 function formatRelativeTime(updatedAt: number | null): string {

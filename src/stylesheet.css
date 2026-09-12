@@ -20,3 +20,23 @@
 .deepseek-updated {
     opacity: 0.7;
 }
+
+.deepseek-status-icon {
+    margin: 0 4px;
+}
+
+.deepseek-status-available {
+    color: #33d17a;
+}
+
+.deepseek-status-insufficient {
+    color: #ff7800;
+}
+
+.deepseek-status-nodata {
+    color: #9a9996;
+}
+
+.deepseek-status-error {
+    color: #e01b24;
+}
