@@ -5,12 +5,14 @@ import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
 import {UsageIndicator} from './indicator.js';
+import {ApiKeyStore} from './lib/api-key-store.js';
 import {DeepSeekClient} from './lib/deepseek/client.js';
 import {DeepSeekBalanceProvider} from './lib/deepseek/provider.js';
 import {UsageService} from './lib/usage/service.js';
 
 export default class GnomeDeepseekUsage extends Extension {
     private settings: Gio.Settings | null = null;
+    private store: ApiKeyStore | null = null;
     private client: DeepSeekClient | null = null;
     private service: UsageService | null = null;
     private indicator: UsageIndicator | null = null;
@@ -22,7 +24,9 @@ export default class GnomeDeepseekUsage extends Extension {
         const settings = this.getSettings();
         this.settings = settings;
 
-        this.client = new DeepSeekClient(() => settings.get_string('api-key'));
+        const store = new ApiKeyStore();
+        this.store = store;
+        this.client = new DeepSeekClient(() => store.getApiKey());
         this.service = new UsageService();
         this.service.addProvider(new DeepSeekBalanceProvider(this.client));
 
@@ -31,7 +35,6 @@ export default class GnomeDeepseekUsage extends Extension {
 
         this.disconnect = this.service.connect(snapshot => this.indicator?.update(snapshot));
 
-        this.settingsIds.push(settings.connect('changed::api-key', () => this.service?.refresh()));
         this.settingsIds.push(
             settings.connect('changed::refresh-interval', () => this.restartTimer())
         );
@@ -59,6 +62,7 @@ export default class GnomeDeepseekUsage extends Extension {
         this.client = null;
 
         this.service = null;
+        this.store = null;
         this.settings = null;
     }
 

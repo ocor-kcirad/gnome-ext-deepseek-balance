@@ -8,10 +8,10 @@ const BASE_URL = 'https://api.deepseek.com';
 export class DeepSeekClient {
     private readonly session = new Soup.Session();
 
-    constructor(private readonly getApiKey: () => string) {}
+    constructor(private readonly getApiKey: () => Promise<string | null>) {}
 
     async getBalance(): Promise<UserBalance> {
-        const apiKey = this.getApiKey().trim();
+        const apiKey = (await this.getApiKey())?.trim() ?? '';
 
         if (!apiKey)
             throw new Error('No API key configured. Add one in the extension preferences.');

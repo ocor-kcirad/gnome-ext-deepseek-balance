@@ -21,6 +21,7 @@ Build requires `zip` and `glib-compile-schemas` (`gnome-extensions` too for inst
 - `src/indicator.ts` — `UsageIndicator extends PanelMenu.Button`; panel label + balance menu.
 - `src/prefs.ts` — `ExtensionPreferences` subclass; libadwaita (`Adw`) rows bound to GSettings.
 - `src/lib/http.ts` — `requestJson` on libsoup 3.
+- `src/lib/api-key-store.ts` — API key in the Secret Service (libsecret); the extension never stores it in GSettings.
 - `src/lib/deepseek/` — `DeepSeekClient` (`GET /user/balance`) + `DeepSeekBalanceProvider`.
 - `src/lib/usage/` — provider-agnostic `UsageService` / `UsageProvider` / `UsageSnapshot`. Add new data sources as providers.
 - `scripts/build.sh` — compiles TS, GSettings schemas, translations, GResources, then zips.
@@ -44,5 +45,6 @@ Build requires `zip` and `glib-compile-schemas` (`gnome-extensions` too for inst
 - GNOME Shell/GJS APIs via `resource:///org/gnome/...` and `gi://...`; types from `@girs/*`, ambient declarations in `ambient.d.ts`.
 - Prettier: `tabWidth: 4`, `singleQuote: true`, `bracketSpacing: false` (JSON/YAML use `tabWidth: 2`).
 - No comments unless necessary.
+- Never log or commit secrets. The DeepSeek API key lives in the Secret Service via `src/lib/api-key-store.ts`, not in GSettings/dconf.
 - Commit messages follow Conventional Commits (`feat:`, `fix:`, `docs:`, `chore:`, ...), imperative mood.
 - Gitignored build artifacts: `dist/`, `*.zip`, `*.shell-extension/`, `*.gresource*`, `locale/`, `node_modules/`.

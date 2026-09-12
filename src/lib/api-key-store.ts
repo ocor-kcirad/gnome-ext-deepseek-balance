@@ -1,0 +1,34 @@
+import Secret from 'gi://Secret';
+
+const SCHEMA = Secret.Schema.new(
+    'org.gnome.shell.extensions.gnome-deepseek-usage',
+    Secret.SchemaFlags.NONE,
+    {
+        purpose: Secret.SchemaAttributeType.STRING,
+    },
+);
+
+const ATTRIBUTES = {purpose: 'deepseek-api-key'};
+const LABEL = 'DeepSeek Balance API key';
+
+export class ApiKeyStore {
+    async getApiKey(): Promise<string | null> {
+        const apiKey = await Secret.password_lookup(SCHEMA, ATTRIBUTES, null);
+        return apiKey ? apiKey : null;
+    }
+
+    async setApiKey(apiKey: string): Promise<void> {
+        await Secret.password_store(
+            SCHEMA,
+            ATTRIBUTES,
+            Secret.COLLECTION_DEFAULT,
+            LABEL,
+            apiKey,
+            null,
+        );
+    }
+
+    async clearApiKey(): Promise<void> {
+        await Secret.password_clear(SCHEMA, ATTRIBUTES, null);
+    }
+}

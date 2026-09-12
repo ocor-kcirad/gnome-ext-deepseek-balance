@@ -3,14 +3,17 @@ import Gio from 'gi://Gio';
 
 import {ExtensionPreferences} from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
 
+import {ApiKeyStore} from './lib/api-key-store.js';
+
 export default class GnomeDeepseekUsagePrefs extends ExtensionPreferences {
     override fillPreferencesWindow(window: Adw.PreferencesWindow): void {
         const settings = this.getSettings();
+        const store = new ApiKeyStore();
 
         const page = new Adw.PreferencesPage();
         const group = new Adw.PreferencesGroup({
             title: 'DeepSeek',
-            description: 'Configure how the extension retrieves your DeepSeek balance.',
+            description: 'Your API key is stored in your system keyring, not by this extension.',
         });
         page.add(group);
 
@@ -18,8 +21,29 @@ export default class GnomeDeepseekUsagePrefs extends ExtensionPreferences {
             title: 'API key',
             show_apply_button: true,
         });
-        settings.bind('api-key', apiKeyRow, 'text', Gio.SettingsBindFlags.DEFAULT);
         group.add(apiKeyRow);
+
+        store
+            .getApiKey()
+            .then(apiKey => {
+                apiKeyRow.text = apiKey ?? '';
+            })
+            .catch(error => {
+                window.add_toast(
+                    new Adw.Toast({title: `Could not read API key: ${errorMessage(error)}`})
+                );
+            });
+
+        apiKeyRow.connect('apply', () => {
+            const apiKey = apiKeyRow.text.trim();
+            const action = apiKey ? store.setApiKey(apiKey) : store.clearApiKey();
+
+            action.catch(error => {
+                window.add_toast(
+                    new Adw.Toast({title: `Could not save API key: ${errorMessage(error)}`})
+                );
+            });
+        });
 
         const intervalRow = Adw.SpinRow.new_with_range(60, 3600, 30);
         intervalRow.title = 'Refresh interval';
@@ -27,6 +51,15 @@ export default class GnomeDeepseekUsagePrefs extends ExtensionPreferences {
         settings.bind('refresh-interval', intervalRow, 'value', Gio.SettingsBindFlags.DEFAULT);
         group.add(intervalRow);
 
+        window.connect('close-request', () => {
+            apiKeyRow.text = '';
+            return false;
+        });
+
         window.add(page);
     }
+}
+
+function errorMessage(error: unknown): string {
+    return error instanceof Error ? error.message : String(error);
 }
