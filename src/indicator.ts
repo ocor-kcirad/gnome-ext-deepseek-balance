@@ -28,7 +28,6 @@ export class UsageIndicator extends PanelMenu.Button {
     private readonly statusIcon: St.Icon;
     private readonly statusTooltip: Tooltip;
     private readonly totalValueLabel: St.Label;
-    private readonly totalTooltip: Tooltip;
     private readonly updatedItem: PopupMenu.PopupMenuItem;
 
     private readonly linkIcon: St.Icon;
@@ -101,7 +100,6 @@ export class UsageIndicator extends PanelMenu.Button {
         });
         totalBox.add_child(this.totalValueLabel);
         this.popupMenu.box.add_child(totalBox);
-        this.totalTooltip = new Tooltip(this.totalValueLabel);
 
         this.popupMenu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
 
@@ -145,7 +143,6 @@ export class UsageIndicator extends PanelMenu.Button {
         if (this.updatedTimerId) GLib.source_remove(this.updatedTimerId);
         this.stSettings.disconnect(this.colorSchemeId);
         this.statusTooltip.destroy();
-        this.totalTooltip.destroy();
         super.destroy();
     }
 
@@ -162,10 +159,6 @@ export class UsageIndicator extends PanelMenu.Button {
         this.statusIcon.set_accessible_name(text);
         this.statusTooltip.set_text(text);
         this.totalValueLabel.set_text(amountText(info, 'total_balance'));
-        this.totalTooltip.set_text(
-            `Granted balance: ${amountText(info, 'granted_balance')}\n` +
-                `Topped-up balance: ${amountText(info, 'topped_up_balance')}`
-        );
         this.updateUpdatedLabel();
     }
 }
