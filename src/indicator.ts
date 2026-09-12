@@ -62,6 +62,7 @@ export class UsageIndicator extends PanelMenu.Button {
         statusItem.label.hide();
         statusItem.track_hover = true;
         this.statusIcon = new St.Icon({
+            icon_name: STATUS_ICON,
             icon_size: 16,
             style_class: 'deepseek-status-icon',
         });
@@ -162,7 +163,6 @@ export class UsageIndicator extends PanelMenu.Button {
             info ? formatAmount(info.currency, info.total_balance) : error ? '⚠ DeepSeek' : 'DeepSeek'
         );
         const {state, text} = statusState(balance, error);
-        this.statusIcon.set_icon_name(STATUS_ICONS[state]);
         this.statusIcon.set_style_class_name(`deepseek-status-icon deepseek-status-${state}`);
         this.statusIcon.set_accessible_name(text);
         this.statusTooltip.set_text(text);
@@ -191,12 +191,7 @@ function formatAmount(currency: string, amount: string): string {
 
 type StatusState = 'available' | 'insufficient' | 'nodata' | 'error';
 
-const STATUS_ICONS: Record<StatusState, string> = {
-    available: 'object-select-symbolic',
-    insufficient: 'dialog-warning-symbolic',
-    nodata: 'dialog-question-symbolic',
-    error: 'dialog-error-symbolic',
-};
+const STATUS_ICON = 'media-record-symbolic';
 
 function statusState(
     balance: UserBalance | null,
