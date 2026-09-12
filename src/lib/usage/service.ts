@@ -1,3 +1,4 @@
+import {errorMessage} from '../error-message.js';
 import type {UsageProvider} from './provider.js';
 import type {UsageListener, UsageSnapshot} from './types.js';
 
@@ -35,13 +36,18 @@ export class UsageService {
 
         try {
             const results = await Promise.allSettled(
-                this.providers.map(provider => provider.fetch())
+                this.providers.map((provider) => provider.fetch()),
             );
-            const next: UsageSnapshot = {...this.snapshot, updatedAt: Date.now(), error: null};
+            const next: UsageSnapshot = {
+                ...this.snapshot,
+                updatedAt: Date.now(),
+                error: null,
+            };
             const errors: string[] = [];
 
             for (const result of results) {
-                if (result.status === 'fulfilled') Object.assign(next, result.value);
+                if (result.status === 'fulfilled')
+                    Object.assign(next, result.value);
                 else errors.push(errorMessage(result.reason));
             }
 
@@ -57,8 +63,4 @@ export class UsageService {
     private emit(): void {
         for (const listener of this.listeners) listener(this.snapshot);
     }
-}
-
-function errorMessage(reason: unknown): string {
-    return reason instanceof Error ? reason.message : String(reason);
 }

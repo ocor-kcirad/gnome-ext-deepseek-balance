@@ -1,54 +1,42 @@
-# create-gnome-extension
+# DeepSeek Balance
 
-`create-gnome-extension` is a community maintained scaffolding tool to build GNOME Shell extensions.
+A GNOME Shell extension that shows your DeepSeek balance in the top bar.
 
-## Developing a GNOME Shell extension
+## Features
 
-To get started with developing GNOME Shell extensions, visit [gjs.guide](https://gjs.guide/extensions/). It has tutorials and guides written by the GNOME community.
+- Top-bar label showing your total balance
+- Menu with status, emphasized total balance, and a relative last-updated time
+- Click the last-updated row to refresh, or the icon to open the DeepSeek usage dashboard
+- API key stored in the system keyring (Secret Service), never in GSettings
 
-If you need more help, you can use the following channels
+## Requirements
 
--   [Discourse](https://discourse.gnome.org/tag/extensions)
--   [Matrix](https://matrix.to/#/#extensions:gnome.org)
--   [StackOverflow](https://stackoverflow.com/questions/tagged/gnome-shell-extensions+gjs)
+- GNOME Shell 50
+- A DeepSeek API key: https://platform.deepseek.com/api_keys
 
-## Usage
-
-To use `create-gnome-extension` run the following command in a terminal.
+## Build & install
 
 ```sh
-npm create gnome-extension@latest
+npm install
+npm run build:install
 ```
 
-You will be asked some questions to determine which files to include in your project.
+Log out and back in to load the extension, then enable it and add your API key in its preferences.
 
-## Project Structure
+## Development
 
-The following file structure will be created when running `npm create gnome-extension`. Depending on the options passed to create-gnome-extension, some files may not be included in your project.
+- `npm run build` — build the extension zip
+- `npm run build:install` — build and install
+- `npm run build:dev` — build, install, and reload GNOME Shell (X11 + unsafe mode only)
+- `npm run check:lint` / `npm run check:format` / `npm run check:types`
 
-```
-project-directory/
-├── data/
-├── po/
-├── scripts/
-├── src/
-│   ├── schemas/
-│   │   └── org.gnome.shell.extensions.project-name.gschema.xml
-│   ├── extension.[js|ts]
-│   ├── prefs.[js|ts]
-│   └── stylesheet.css
-├── metadata.json
-└── ...
-```
+## Project layout
 
--   `data/` contains files that will be bundled into a [GResource](https://docs.gtk.org/gio/struct.Resource.html) file when building your extension.
--   `po/` contains files for the [translation of your project](https://gjs.guide/extensions/development/translations.html). The template file (`*.pot`) lists all translatable strings. Translators will use this template to create translation files (`*.po`).
--   `scripts/` consists of scripts to build and install your extension. The scripts have `--help` flags. They can also be called via the npm scripts in `package.json`.
--   `src/` is where the actual source code of your extension will reside. `extension.js` is the main entry point, `prefs.js` is the entry point for your preference window.
--   `metadata.json` provides information about your extension for GNOME Shell's extension system.
-
-Other files may be included but they aren't directly related to extension development. For instance, configuration files for tools like Prettier or ESLint.
-
-## License
-
-This software is distributed under the terms of the GNU General Public License, version 2 or later. See the license file for details.
+- `src/extension.ts` — entry point; owns the usage service, refresh timer, and settings
+- `src/indicator.ts` — panel button and dropdown menu
+- `src/prefs.ts` — preferences window
+- `src/lib/deepseek/` — DeepSeek API client and balance provider
+- `src/lib/usage/` — provider-agnostic usage service
+- `src/lib/api-key-store.ts` — API key storage via the Secret Service
+- `src/lib/http.ts` — libsoup JSON helper
+- `src/lib/tooltip.ts` — hover tooltip

@@ -10,7 +10,7 @@ import {DeepSeekClient} from './lib/deepseek/client.js';
 import {DeepSeekBalanceProvider} from './lib/deepseek/provider.js';
 import {UsageService} from './lib/usage/service.js';
 
-export default class GnomeDeepseekUsage extends Extension {
+export default class DeepSeekBalanceExtension extends Extension {
     private settings: Gio.Settings | null = null;
     private store: ApiKeyStore | null = null;
     private client: DeepSeekClient | null = null;
@@ -33,10 +33,14 @@ export default class GnomeDeepseekUsage extends Extension {
         this.indicator = new UsageIndicator(this.service, `${this.path}/icons`);
         Main.panel.addToStatusArea(this.uuid, this.indicator);
 
-        this.disconnect = this.service.connect(snapshot => this.indicator?.update(snapshot));
+        this.disconnect = this.service.connect((snapshot) =>
+            this.indicator?.update(snapshot),
+        );
 
         this.settingsIds.push(
-            settings.connect('changed::refresh-interval', () => this.restartTimer())
+            settings.connect('changed::refresh-interval', () =>
+                this.restartTimer(),
+            ),
         );
 
         this.service.refresh();
@@ -73,9 +77,13 @@ export default class GnomeDeepseekUsage extends Extension {
         }
 
         const interval = this.settings?.get_int('refresh-interval') ?? 300;
-        this.timeoutId = GLib.timeout_add_seconds(GLib.PRIORITY_DEFAULT, interval, () => {
-            this.service?.refresh();
-            return GLib.SOURCE_CONTINUE;
-        });
+        this.timeoutId = GLib.timeout_add_seconds(
+            GLib.PRIORITY_DEFAULT,
+            interval,
+            () => {
+                this.service?.refresh();
+                return GLib.SOURCE_CONTINUE;
+            },
+        );
     }
 }

@@ -7,8 +7,8 @@ import St from 'gi://St';
 import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
 import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
 
-import type {BalanceInfo, UserBalance} from './lib/deepseek/types.js';
 import {Tooltip} from './lib/tooltip.js';
+import type {BalanceInfo, UserBalance} from './lib/deepseek/types.js';
 import type {UsageService} from './lib/usage/service.js';
 import type {UsageSnapshot} from './lib/usage/types.js';
 
@@ -21,7 +21,7 @@ const USAGE_URL = 'https://platform.deepseek.com/usage';
 
 export class UsageIndicator extends PanelMenu.Button {
     static {
-        GObject.registerClass({GTypeName: 'DeepSeekUsageIndicator'}, this);
+        GObject.registerClass({GTypeName: 'DeepSeekBalanceIndicator'}, this);
     }
 
     private readonly panelLabel: St.Label;
@@ -34,19 +34,26 @@ export class UsageIndicator extends PanelMenu.Button {
     private readonly stSettings = St.Settings.get();
     private readonly colorSchemeId: number;
     private readonly updatedTimerId: number;
-    private snapshot: UsageSnapshot = {balance: null, updatedAt: null, error: null};
+    private snapshot: UsageSnapshot = {
+        balance: null,
+        updatedAt: null,
+        error: null,
+    };
 
     constructor(
         private readonly service: UsageService,
-        private readonly iconsDir: string
+        private readonly iconsDir: string,
     ) {
         super(0.0, 'DeepSeek Balance');
 
         this.linkIcon = new St.Icon({icon_size: 16});
         this.updateIcons();
-        this.colorSchemeId = this.stSettings.connect('notify::color-scheme', () => {
-            this.updateIcons();
-        });
+        this.colorSchemeId = this.stSettings.connect(
+            'notify::color-scheme',
+            () => {
+                this.updateIcons();
+            },
+        );
 
         this.panelLabel = new St.Label({
             text: 'DeepSeek',
@@ -89,7 +96,7 @@ export class UsageIndicator extends PanelMenu.Button {
                 x_expand: true,
                 reactive: true,
                 style_class: 'deepseek-total-heading',
-            })
+            }),
         );
         this.totalValueLabel = new St.Label({
             text: '—',
@@ -113,10 +120,14 @@ export class UsageIndicator extends PanelMenu.Button {
         });
         this.popupMenu.addMenuItem(this.updatedItem);
 
-        this.updatedTimerId = GLib.timeout_add_seconds(GLib.PRIORITY_DEFAULT, 30, () => {
-            this.updateUpdatedLabel();
-            return GLib.SOURCE_CONTINUE;
-        });
+        this.updatedTimerId = GLib.timeout_add_seconds(
+            GLib.PRIORITY_DEFAULT,
+            30,
+            () => {
+                this.updateUpdatedLabel();
+                return GLib.SOURCE_CONTINUE;
+            },
+        );
 
         this.update(this.service.getSnapshot());
     }
@@ -126,17 +137,20 @@ export class UsageIndicator extends PanelMenu.Button {
     }
 
     private updateIcons(): void {
-        const suffix =
-            this.stSettings.color_scheme === St.SystemColorScheme.PREFER_LIGHT ? 'light' : 'dark';
+        const scheme =
+            this.stSettings.color_scheme === St.SystemColorScheme.PREFER_LIGHT
+                ? 'light'
+                : 'dark';
+        const iconPath = `${this.iconsDir}/deepseek-${scheme}.svg`;
         this.linkIcon.set_gicon(
-            Gio.icon_new_for_string(
-                `${this.iconsDir}/deepseek-${suffix}.svg`
-            ) as unknown as St.Icon['gicon']
+            Gio.icon_new_for_string(iconPath) as unknown as St.Icon['gicon'],
         );
     }
 
     private updateUpdatedLabel(): void {
-        this.updatedItem.label.set_text(`Updated ${formatRelativeTime(this.snapshot.updatedAt)}`);
+        this.updatedItem.label.set_text(
+            `Updated ${formatRelativeTime(this.snapshot.updatedAt)}`,
+        );
     }
 
     override destroy(): void {
@@ -151,14 +165,16 @@ export class UsageIndicator extends PanelMenu.Button {
         const {balance, error} = snapshot;
         const info = selectBalance(balance?.balance_infos ?? []);
 
-        this.panelLabel.set_text(
-            info ? formatAmount(info.currency, info.total_balance) : error ? '⚠ DeepSeek' : 'DeepSeek'
-        );
+        this.panelLabel.set_text(panelText(info, error));
         const {state, text} = statusState(balance, error);
-        this.statusIcon.set_style_class_name(`deepseek-status-icon deepseek-status-${state}`);
+        this.statusIcon.set_style_class_name(
+            `deepseek-status-icon deepseek-status-${state}`,
+        );
         this.statusIcon.set_accessible_name(text);
         this.statusTooltip.set_text(text);
-        this.totalValueLabel.set_text(amountText(info, 'total_balance'));
+        this.totalValueLabel.set_text(
+            info ? formatAmount(info.currency, info.total_balance) : '—',
+        );
         this.updateUpdatedLabel();
     }
 }
@@ -167,11 +183,10 @@ function selectBalance(infos: BalanceInfo[]): BalanceInfo | null {
     return infos.length > 0 ? infos[0] : null;
 }
 
-function amountText(
-    info: BalanceInfo | null,
-    field: 'total_balance' | 'granted_balance' | 'topped_up_balance'
-): string {
-    return info ? formatAmount(info.currency, info[field]) : '—';
+function panelText(info: BalanceInfo | null, error: string | null): string {
+    if (info) return formatAmount(info.currency, info.total_balance);
+    if (error) return '⚠ DeepSeek';
+    return 'DeepSeek';
 }
 
 function formatAmount(currency: string, amount: string): string {
@@ -185,7 +200,7 @@ const STATUS_ICON = 'media-record-symbolic';
 
 function statusState(
     balance: UserBalance | null,
-    error: string | null
+    error: string | null,
 ): {state: StatusState; text: string} {
     if (error) return {state: 'error', text: `Error: ${error}`};
     if (!balance) return {state: 'nodata', text: 'No data'};

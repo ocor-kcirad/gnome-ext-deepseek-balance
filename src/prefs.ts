@@ -5,8 +5,9 @@ import Gtk from 'gi://Gtk';
 import {ExtensionPreferences} from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
 
 import {ApiKeyStore} from './lib/api-key-store.js';
+import {errorMessage} from './lib/error-message.js';
 
-export default class GnomeDeepseekUsagePrefs extends ExtensionPreferences {
+export default class DeepSeekBalancePrefs extends ExtensionPreferences {
     override fillPreferencesWindow(window: Adw.PreferencesWindow): void {
         const settings = this.getSettings();
         const store = new ApiKeyStore();
@@ -14,7 +15,8 @@ export default class GnomeDeepseekUsagePrefs extends ExtensionPreferences {
         const page = new Adw.PreferencesPage();
         const group = new Adw.PreferencesGroup({
             title: 'DeepSeek',
-            description: 'Your API key is stored in your system keyring, not by this extension.',
+            description:
+                'Your API key is stored in your system keyring, not by this extension.',
         });
         page.add(group);
 
@@ -26,22 +28,28 @@ export default class GnomeDeepseekUsagePrefs extends ExtensionPreferences {
 
         store
             .getApiKey()
-            .then(apiKey => {
+            .then((apiKey) => {
                 apiKeyRow.text = apiKey ?? '';
             })
-            .catch(error => {
+            .catch((error) => {
                 window.add_toast(
-                    new Adw.Toast({title: `Could not read API key: ${errorMessage(error)}`})
+                    new Adw.Toast({
+                        title: `Could not read API key: ${errorMessage(error)}`,
+                    }),
                 );
             });
 
         apiKeyRow.connect('apply', () => {
             const apiKey = apiKeyRow.text.trim();
-            const action = apiKey ? store.setApiKey(apiKey) : store.clearApiKey();
+            const action = apiKey
+                ? store.setApiKey(apiKey)
+                : store.clearApiKey();
 
-            action.catch(error => {
+            action.catch((error) => {
                 window.add_toast(
-                    new Adw.Toast({title: `Could not save API key: ${errorMessage(error)}`})
+                    new Adw.Toast({
+                        title: `Could not save API key: ${errorMessage(error)}`,
+                    }),
                 );
             });
         });
@@ -61,11 +69,15 @@ export default class GnomeDeepseekUsagePrefs extends ExtensionPreferences {
                 .clearApiKey()
                 .then(() => {
                     apiKeyRow.text = '';
-                    window.add_toast(new Adw.Toast({title: 'Stored API key removed'}));
-                })
-                .catch(error => {
                     window.add_toast(
-                        new Adw.Toast({title: `Could not remove API key: ${errorMessage(error)}`})
+                        new Adw.Toast({title: 'Stored API key removed'}),
+                    );
+                })
+                .catch((error) => {
+                    window.add_toast(
+                        new Adw.Toast({
+                            title: `Could not remove API key: ${errorMessage(error)}`,
+                        }),
                     );
                 });
         });
@@ -75,7 +87,12 @@ export default class GnomeDeepseekUsagePrefs extends ExtensionPreferences {
         const intervalRow = Adw.SpinRow.new_with_range(60, 3600, 30);
         intervalRow.title = 'Refresh interval';
         intervalRow.subtitle = 'Seconds between automatic balance updates';
-        settings.bind('refresh-interval', intervalRow, 'value', Gio.SettingsBindFlags.DEFAULT);
+        settings.bind(
+            'refresh-interval',
+            intervalRow,
+            'value',
+            Gio.SettingsBindFlags.DEFAULT,
+        );
         group.add(intervalRow);
 
         window.connect('close-request', () => {
@@ -85,8 +102,4 @@ export default class GnomeDeepseekUsagePrefs extends ExtensionPreferences {
 
         window.add(page);
     }
-}
-
-function errorMessage(error: unknown): string {
-    return error instanceof Error ? error.message : String(error);
 }

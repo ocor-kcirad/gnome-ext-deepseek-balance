@@ -14,11 +14,17 @@ export class DeepSeekClient {
         const apiKey = (await this.getApiKey())?.trim() ?? '';
 
         if (!apiKey)
-            throw new Error('No API key configured. Add one in the extension preferences.');
+            throw new Error(
+                'No API key configured. Add one in the extension preferences.',
+            );
 
-        return requestJson<UserBalance>(this.session, `${BASE_URL}/user/balance`, {
-            headers: {Authorization: `Bearer ${apiKey}`},
-        });
+        return requestJson<UserBalance>(
+            this.session,
+            `${BASE_URL}/user/balance`,
+            {
+                headers: {Authorization: `Bearer ${apiKey}`},
+            },
+        );
     }
 
     abort(): void {

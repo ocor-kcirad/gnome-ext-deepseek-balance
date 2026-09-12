@@ -1,6 +1,7 @@
 import Gio from 'gi://Gio';
 import Secret from 'gi://Secret';
 
+// @girs types these as promises, but GJS only returns promises once promisified.
 Gio._promisify(Secret, 'password_lookup', 'password_lookup_finish');
 Gio._promisify(Secret, 'password_store', 'password_store_finish');
 Gio._promisify(Secret, 'password_clear', 'password_clear_finish');
