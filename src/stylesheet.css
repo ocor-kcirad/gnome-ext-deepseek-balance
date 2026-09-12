@@ -35,19 +35,6 @@
     margin: 0 4px;
 }
 
-.deepseek-vseparator {
-    width: 1px;
-    margin: 4px 6px;
-}
-
-.deepseek-vseparator-dark {
-    background-color: rgba(255, 255, 255, 0.1);
-}
-
-.deepseek-vseparator-light {
-    background-color: rgba(34, 34, 38, 0.15);
-}
-
 .deepseek-status-available {
     color: #33d17a;
 }
