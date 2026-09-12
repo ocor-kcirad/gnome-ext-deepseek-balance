@@ -26,6 +26,7 @@ export class UsageIndicator extends PanelMenu.Button {
 
     private readonly panelLabel: St.Label;
     private readonly statusIcon: St.Icon;
+    private readonly separator: St.Widget;
     private readonly statusTooltip: Tooltip;
     private readonly totalValueLabel: St.Label;
     private readonly totalTooltip: Tooltip;
@@ -47,6 +48,7 @@ export class UsageIndicator extends PanelMenu.Button {
         this.updateIcons();
         this.colorSchemeId = this.stSettings.connect('notify::color-scheme', () => {
             this.updateIcons();
+            this.updateSeparator();
         });
 
         this.panelLabel = new St.Label({
@@ -64,6 +66,13 @@ export class UsageIndicator extends PanelMenu.Button {
             style_class: 'deepseek-status-icon',
         });
         statusItem.add_child(this.statusIcon);
+
+        this.separator = new St.Widget({
+            y_expand: true,
+            style_class: 'deepseek-vseparator',
+        });
+        statusItem.add_child(this.separator);
+        this.updateSeparator();
 
         const linkButton = new St.Button({
             child: this.linkIcon,
@@ -133,6 +142,12 @@ export class UsageIndicator extends PanelMenu.Button {
                 `${this.iconsDir}/deepseek-${suffix}.svg`
             ) as unknown as St.Icon['gicon']
         );
+    }
+
+    private updateSeparator(): void {
+        const suffix =
+            this.stSettings.color_scheme === St.SystemColorScheme.PREFER_LIGHT ? 'light' : 'dark';
+        this.separator.set_style_class_name(`deepseek-vseparator deepseek-vseparator-${suffix}`);
     }
 
     private updateUpdatedLabel(): void {
