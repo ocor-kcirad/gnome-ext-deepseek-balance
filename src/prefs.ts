@@ -1,5 +1,6 @@
 import Adw from 'gi://Adw';
 import Gio from 'gi://Gio';
+import Gtk from 'gi://Gtk';
 
 import {ExtensionPreferences} from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
 
@@ -44,6 +45,32 @@ export default class GnomeDeepseekUsagePrefs extends ExtensionPreferences {
                 );
             });
         });
+
+        const removeRow = new Adw.ActionRow({
+            title: 'Remove stored API key',
+            subtitle:
+                'Deletes the key from your system keyring. Uninstalling the extension does not remove it.',
+        });
+        const removeButton = new Gtk.Button({
+            label: 'Remove',
+            valign: Gtk.Align.CENTER,
+        });
+        removeButton.add_css_class('destructive-action');
+        removeButton.connect('clicked', () => {
+            store
+                .clearApiKey()
+                .then(() => {
+                    apiKeyRow.text = '';
+                    window.add_toast(new Adw.Toast({title: 'Stored API key removed'}));
+                })
+                .catch(error => {
+                    window.add_toast(
+                        new Adw.Toast({title: `Could not remove API key: ${errorMessage(error)}`})
+                    );
+                });
+        });
+        removeRow.add_suffix(removeButton);
+        group.add(removeRow);
 
         const intervalRow = Adw.SpinRow.new_with_range(60, 3600, 30);
         intervalRow.title = 'Refresh interval';

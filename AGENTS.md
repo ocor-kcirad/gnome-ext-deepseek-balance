@@ -45,6 +45,6 @@ Build requires `zip` and `glib-compile-schemas` (`gnome-extensions` too for inst
 - GNOME Shell/GJS APIs via `resource:///org/gnome/...` and `gi://...`; types from `@girs/*`, ambient declarations in `ambient.d.ts`.
 - Prettier: `tabWidth: 4`, `singleQuote: true`, `bracketSpacing: false` (JSON/YAML use `tabWidth: 2`).
 - No comments unless necessary.
-- Never log or commit secrets. The DeepSeek API key lives in the Secret Service via `src/lib/api-key-store.ts`, not in GSettings/dconf.
+- Never log or commit secrets. The DeepSeek API key lives in the Secret Service via `src/lib/api-key-store.ts`, not in GSettings/dconf. Uninstalling the extension does not delete the keyring entry; users remove it via the prefs "Remove stored API key" action.
 - Commit messages follow Conventional Commits (`feat:`, `fix:`, `docs:`, `chore:`, ...), imperative mood.
 - Gitignored build artifacts: `dist/`, `*.zip`, `*.shell-extension/`, `*.gresource*`, `locale/`, `node_modules/`.
