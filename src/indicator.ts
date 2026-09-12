@@ -58,8 +58,8 @@ export class UsageIndicator extends PanelMenu.Button {
         });
         this.add_child(this.panelLabel);
 
-        const statusItem = new PopupMenu.PopupMenuItem('', {reactive: true});
-        statusItem.label.hide();
+        const statusItem = new PopupMenu.PopupMenuItem('Status:');
+        statusItem.label.x_expand = true;
         statusItem.track_hover = true;
         this.statusIcon = new St.Icon({
             icon_name: STATUS_ICON,
