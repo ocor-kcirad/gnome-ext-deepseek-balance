@@ -13,6 +13,10 @@
     background-color: rgba(255, 255, 255, 0.12);
 }
 
-.deepseek-link-button {
+.deepseek-icon-button {
     padding: 5px 8px;
+}
+
+.deepseek-updated {
+    opacity: 0.7;
 }

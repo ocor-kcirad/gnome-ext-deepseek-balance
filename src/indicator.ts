@@ -28,8 +28,9 @@ export class UsageIndicator extends PanelMenu.Button {
     private readonly totalItem: PopupMenu.PopupMenuItem;
     private readonly grantedItem: PopupMenu.PopupMenuItem;
     private readonly toppedUpItem: PopupMenu.PopupMenuItem;
-    private readonly updatedItem: PopupMenu.PopupMenuItem;
+    private readonly updatedLabel: St.Label;
 
+    private readonly refreshIcon: St.Icon;
     private readonly linkIcon: St.Icon;
     private readonly stSettings = St.Settings.get();
     private readonly colorSchemeId: number;
@@ -42,10 +43,11 @@ export class UsageIndicator extends PanelMenu.Button {
     ) {
         super(0.0, 'DeepSeek Usage');
 
+        this.refreshIcon = new St.Icon({icon_size: 16});
         this.linkIcon = new St.Icon({icon_size: 16});
-        this.updateLinkIcon();
+        this.updateIcons();
         this.colorSchemeId = this.stSettings.connect('notify::color-scheme', () => {
-            this.updateLinkIcon();
+            this.updateIcons();
         });
 
         this.panelLabel = new St.Label({
@@ -60,7 +62,6 @@ export class UsageIndicator extends PanelMenu.Button {
         this.toppedUpItem = this.addInfoItem('Topped-up balance: —');
 
         this.popupMenu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
-        this.updatedItem = this.addInfoItem('Updated never');
 
         const actionsItem = new PopupMenu.PopupMenuItem('', {reactive: false, can_focus: false});
         actionsItem.label.hide();
@@ -69,10 +70,17 @@ export class UsageIndicator extends PanelMenu.Button {
         const actionsBox = new St.BoxLayout({x_expand: true});
         actionsItem.add_child(actionsBox);
 
-        const refreshButton = new St.Button({
-            label: 'Refresh now',
+        this.updatedLabel = new St.Label({
+            text: 'Updated never',
             x_expand: true,
-            style_class: 'deepseek-action-button',
+            y_align: Clutter.ActorAlign.CENTER,
+            style_class: 'deepseek-updated',
+        });
+        actionsBox.add_child(this.updatedLabel);
+
+        const refreshButton = new St.Button({
+            child: this.refreshIcon,
+            style_class: 'deepseek-action-button deepseek-icon-button',
         });
         refreshButton.connect('clicked', () => {
             this.service.refresh();
@@ -81,7 +89,7 @@ export class UsageIndicator extends PanelMenu.Button {
 
         const linkButton = new St.Button({
             child: this.linkIcon,
-            style_class: 'deepseek-action-button deepseek-link-button',
+            style_class: 'deepseek-action-button deepseek-icon-button',
         });
         linkButton.connect('clicked', () => {
             Gio.AppInfo.launch_default_for_uri(USAGE_URL, null);
@@ -102,18 +110,21 @@ export class UsageIndicator extends PanelMenu.Button {
         return this.menu as PopupMenu.PopupMenu;
     }
 
-    private updateLinkIcon(): void {
-        const file =
-            this.stSettings.color_scheme === St.SystemColorScheme.PREFER_LIGHT
-                ? 'deepseek-light.svg'
-                : 'deepseek-dark.svg';
-        this.linkIcon.set_gicon(
-            Gio.icon_new_for_string(`${this.iconsDir}/${file}`) as unknown as St.Icon['gicon']
-        );
+    private updateIcons(): void {
+        const suffix =
+            this.stSettings.color_scheme === St.SystemColorScheme.PREFER_LIGHT ? 'light' : 'dark';
+        const icons: [St.Icon, string][] = [
+            [this.refreshIcon, `refresh-${suffix}.svg`],
+            [this.linkIcon, `deepseek-${suffix}.svg`],
+        ];
+        for (const [icon, file] of icons)
+            icon.set_gicon(
+                Gio.icon_new_for_string(`${this.iconsDir}/${file}`) as unknown as St.Icon['gicon']
+            );
     }
 
     private updateUpdatedLabel(): void {
-        this.updatedItem.label.set_text(`Updated ${formatRelativeTime(this.snapshot.updatedAt)}`);
+        this.updatedLabel.set_text(`Updated ${formatRelativeTime(this.snapshot.updatedAt)}`);
     }
 
     override destroy(): void {
