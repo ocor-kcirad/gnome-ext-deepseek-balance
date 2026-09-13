@@ -13,13 +13,19 @@ A GNOME Shell extension that shows your DeepSeek balance in the top bar.
 
 - GNOME Shell 50
 - A DeepSeek API key: https://platform.deepseek.com/api_keys
-- For building: `zip`, `glib-compile-schemas`, and `gnome-extensions` on `PATH`
 
 ## Installation
 
-### Quick deploy (from source)
+### From extensions.gnome.org
 
-Builds and installs the extension into your user extensions directory in one step:
+Browse to https://extensions.gnome.org/ and search for **DeepSeek Balance**,
+then toggle it on. Open its settings to add your API key.
+
+### From source (quick deploy)
+
+Builds and installs the extension into your user extensions directory in one
+step. Requires `npm`, `zip`, `glib-compile-schemas`, and `gnome-extensions` on
+`PATH`.
 
 ```sh
 npm install
@@ -47,7 +53,8 @@ You can also toggle it and open its settings from the GNOME Extensions app.
    npm run build
    ```
 
-   This produces `deepseek-balance@ocor-kcirad.shell-extension.zip` in the project root.
+   This produces `deepseek-balance@ocor-kcirad.shell-extension.zip` in the
+   project root.
 
 2. Install it with `gnome-extensions`:
 
@@ -87,7 +94,8 @@ You can also toggle it and open its settings from the GNOME Extensions app.
 - `npm run build:dev` — build, install, and reload GNOME Shell (X11 + unsafe mode only)
 - `npm run check:lint` / `npm run check:format` / `npm run check:types`
 
-There is no test suite.
+There is no test suite. Building requires `zip`, `glib-compile-schemas`, and
+`gnome-extensions` on `PATH`.
 
 ## Project layout
 
@@ -100,3 +108,10 @@ There is no test suite.
 - `src/lib/http.ts` — libsoup JSON helper
 - `src/lib/tooltip.ts` — hover tooltip
 - `src/schemas/` — GSettings schema (`refresh-interval`)
+- `scripts/build.sh` — compiles TypeScript, schemas, translations, and resources, then zips the extension
+- `scripts/esbuild.js` — transpiles each `src/**/*.ts` to `dist/`
+- `metadata.json` — extension metadata (UUID, shell version, settings schema)
+
+## License
+
+GPL-2.0-or-later. See [LICENSE](LICENSE).
