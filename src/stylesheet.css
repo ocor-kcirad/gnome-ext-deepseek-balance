@@ -22,7 +22,19 @@
     padding: 6px 16px 10px;
 }
 
+.deepseek-total-heading-row {
+    spacing: 6px;
+}
+
 .deepseek-total-heading {
+    opacity: 0.8;
+}
+
+.deepseek-currency-toggle {
+    height: 16px;
+    min-height: 16px;
+    padding: 0 6px;
+    border-radius: 6px;
     opacity: 0.8;
 }
 

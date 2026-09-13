@@ -30,7 +30,11 @@ export default class DeepSeekBalanceExtension extends Extension {
         this.service = new UsageService();
         this.service.addProvider(new DeepSeekBalanceProvider(this.client));
 
-        this.indicator = new UsageIndicator(this.service, `${this.path}/icons`);
+        this.indicator = new UsageIndicator(
+            this.service,
+            `${this.path}/icons`,
+            (currency) => settings.set_string('currency', currency),
+        );
         this.indicator.setCurrency(settings.get_string('currency'));
         Main.panel.addToStatusArea(this.uuid, this.indicator);
 

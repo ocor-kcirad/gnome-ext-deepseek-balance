@@ -31,6 +31,8 @@ export class UsageIndicator extends PanelMenu.Button {
     private readonly statusTooltip: Tooltip;
     private readonly totalValueLabel: St.Label;
     private readonly updatedItem: PopupMenu.PopupMenuItem;
+    private readonly currencyButton: St.Button;
+    private readonly currencyLabel: St.Label;
 
     private readonly linkIcon: St.Icon;
     private readonly stSettings = St.Settings.get();
@@ -46,6 +48,7 @@ export class UsageIndicator extends PanelMenu.Button {
     constructor(
         private readonly service: UsageService,
         private readonly iconsDir: string,
+        private readonly onCurrencyChange: (currency: string) => void,
     ) {
         super(0.0, 'DeepSeek Balance');
 
@@ -101,7 +104,12 @@ export class UsageIndicator extends PanelMenu.Button {
             reactive: true,
             style_class: 'deepseek-total',
         });
-        totalBox.add_child(
+        const headingRow = new St.BoxLayout({
+            x_expand: true,
+            reactive: true,
+            style_class: 'deepseek-total-heading-row',
+        });
+        headingRow.add_child(
             new St.Label({
                 text: 'Total Balance:',
                 x_expand: true,
@@ -109,6 +117,23 @@ export class UsageIndicator extends PanelMenu.Button {
                 style_class: 'deepseek-total-heading',
             }),
         );
+        this.currencyLabel = new St.Label({
+            text: '',
+            y_align: Clutter.ActorAlign.CENTER,
+        });
+        this.currencyButton = new St.Button({
+            child: this.currencyLabel,
+            visible: false,
+            style_class:
+                'deepseek-action-button deepseek-icon-button deepseek-currency-toggle',
+        });
+        this.currencyButton.set_accessible_name('Switch currency');
+        this.currencyButton.connect('clicked', () => {
+            this.cycleCurrency();
+        });
+        headingRow.add_child(this.currencyButton);
+        totalBox.add_child(headingRow);
+
         this.totalValueLabel = new St.Label({
             text: '—',
             x_expand: true,
@@ -176,10 +201,40 @@ export class UsageIndicator extends PanelMenu.Button {
         this.update(this.snapshot);
     }
 
+    private cycleCurrency(): void {
+        const infos = this.snapshot.balance?.balance_infos ?? [];
+        if (infos.length < 2) return;
+
+        const displayed = selectBalance(infos, this.currency);
+        const currencies = infos.map((info) => info.currency);
+        const index = displayed ? currencies.indexOf(displayed.currency) : -1;
+        const next = currencies[(index + 1) % currencies.length];
+
+        this.onCurrencyChange(next);
+        this.setCurrency(next);
+    }
+
+    private updateCurrencyToggle(
+        infos: BalanceInfo[],
+        info: BalanceInfo | null,
+    ): void {
+        const multiple = infos.length > 1;
+        this.currencyButton.visible = multiple;
+        if (!multiple || !info) return;
+
+        this.currencyLabel.set_text(info.currency);
+
+        const currencies = infos.map((entry) => entry.currency);
+        const index = currencies.indexOf(info.currency);
+        const next = currencies[(index + 1) % currencies.length];
+        this.currencyButton.set_accessible_name(`Show balance in ${next}`);
+    }
+
     update(snapshot: UsageSnapshot): void {
         this.snapshot = snapshot;
         const {balance, error} = snapshot;
-        const info = selectBalance(balance?.balance_infos ?? [], this.currency);
+        const infos = balance?.balance_infos ?? [];
+        const info = selectBalance(infos, this.currency);
 
         this.panelLabel.set_text(panelText(info, error));
         const {state, text} = statusState(balance, info, error);
@@ -192,6 +247,7 @@ export class UsageIndicator extends PanelMenu.Button {
         this.totalValueLabel.set_text(
             info ? formatAmount(info.currency, info.total_balance) : '—',
         );
+        this.updateCurrencyToggle(infos, info);
         this.updateUpdatedLabel();
     }
 }

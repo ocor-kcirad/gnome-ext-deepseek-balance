@@ -6,6 +6,7 @@ A GNOME Shell extension that shows your DeepSeek balance in the top bar.
 
 - Top-bar label showing your total balance
 - Dropdown with the current status, an emphasized total balance, and a relative last-updated time
+- Click the currency toggle beside the total balance to cycle through the currencies returned by the API (shown only when there is more than one)
 - Click the last-updated row to refresh, or the DeepSeek icon to open the usage dashboard
 - API key stored in the system keyring (Secret Service), never in GSettings
 
@@ -87,7 +88,8 @@ You can also toggle it and open its settings from the GNOME Extensions app.
 - **Refresh interval** — how often, in seconds, the balance is refreshed
   (60–3600).
 - **Display currency** — which balance to show when the API returns more than
-  one (Auto, CNY, or USD).
+  one (Auto, CNY, or USD). The currency toggle in the dropdown updates this
+  setting.
 
 ## Development
 
