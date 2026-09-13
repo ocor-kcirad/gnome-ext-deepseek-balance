@@ -15,9 +15,15 @@ export class UsageService {
     private refreshing = false;
     private pendingRefresh = false;
     private nextListenerId = 1;
+    private _destroyed = false;
 
     addProvider(provider: UsageProvider): void {
         this.providers.push(provider);
+    }
+
+    destroy(): void {
+        this._destroyed = true;
+        this.listeners.clear();
     }
 
     getSnapshot(): UsageSnapshot {
@@ -35,7 +41,7 @@ export class UsageService {
     }
 
     async refresh(): Promise<void> {
-        if (this.providers.length === 0) return;
+        if (this.providers.length === 0 || this._destroyed) return;
 
         if (this.refreshing) {
             this.pendingRefresh = true;
@@ -48,6 +54,8 @@ export class UsageService {
             const results = await Promise.allSettled(
                 this.providers.map((provider) => provider.fetch()),
             );
+            if (this._destroyed) return;
+
             const next: UsageSnapshot = {...this.snapshot, error: null};
             const errors: string[] = [];
             let succeeded = false;

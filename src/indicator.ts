@@ -8,7 +8,6 @@ import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
 import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
 
-import {Tooltip} from './lib/tooltip.js';
 import type {BalanceInfo, UserBalance} from './lib/deepseek/types.js';
 import type {UsageService} from './lib/usage/service.js';
 import type {UsageSnapshot} from './lib/usage/types.js';
@@ -28,7 +27,6 @@ export class UsageIndicator extends PanelMenu.Button {
     private readonly panelLabel: St.Label;
     private readonly statusItem: PopupMenu.PopupMenuItem;
     private statusIcon!: St.Icon;
-    private statusTooltip!: Tooltip;
     private totalValueLabel!: St.Label;
     private readonly updatedItem!: PopupMenu.PopupMenuItem;
     private currencyButton!: St.Button;
@@ -122,7 +120,6 @@ export class UsageIndicator extends PanelMenu.Button {
         });
         item.add_child(linkButton);
 
-        this.statusTooltip = new Tooltip(item);
         return item;
     }
 
@@ -214,7 +211,6 @@ export class UsageIndicator extends PanelMenu.Button {
     override destroy(): void {
         if (this._updatedTimerId) GLib.Source.remove(this._updatedTimerId);
         this.stSettings.disconnect(this.colorSchemeId);
-        this.statusTooltip.destroy();
         super.destroy();
     }
 
@@ -257,12 +253,10 @@ export class UsageIndicator extends PanelMenu.Button {
 
         this.panelLabel.set_text(panelText(info, error));
         const {state, text} = statusState(balance, info, error);
-        this.statusItem.label.set_text(`Status: ${text}`);
         this.statusIcon.set_style_class_name(
             `deepseek-status-icon deepseek-status-${state}`,
         );
         this.statusIcon.set_accessible_name(text);
-        this.statusTooltip.set_text(text);
         this.totalValueLabel.set_text(
             info ? formatAmount(info.currency, info.total_balance) : '—',
         );

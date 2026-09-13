@@ -7,6 +7,8 @@ import {ExtensionPreferences} from 'resource:///org/gnome/Shell/Extensions/js/ex
 import {ApiKeyStore} from './lib/api-key-store.js';
 import {errorMessage} from './lib/error-message.js';
 
+const RECOMMENDED_INTERVAL = 300;
+
 export default class DeepSeekBalancePrefs extends ExtensionPreferences {
     override async fillPreferencesWindow(
         window: Adw.PreferencesWindow,
@@ -98,12 +100,24 @@ export default class DeepSeekBalancePrefs extends ExtensionPreferences {
 
         const intervalRow = Adw.SpinRow.new_with_range(60, 3600, 30);
         intervalRow.title = 'Refresh interval';
-        intervalRow.subtitle = 'Seconds between automatic balance updates';
+        intervalRow.use_markup = true;
+        const updateIntervalHint = (): void => {
+            const belowRecommended =
+                settings.get_int('refresh-interval') < RECOMMENDED_INTERVAL;
+            intervalRow.subtitle = belowRecommended
+                ? `<b>Warning:</b> ${RECOMMENDED_INTERVAL} s (5 min) or more is recommended to avoid DeepSeek API rate limits.`
+                : `Seconds between automatic balance updates. ${RECOMMENDED_INTERVAL} s (5 min) or more is recommended.`;
+        };
         settings.bind(
             'refresh-interval',
             intervalRow,
             'value',
             Gio.SettingsBindFlags.DEFAULT,
+        );
+        updateIntervalHint();
+        const intervalChangedId = settings.connect(
+            'changed::refresh-interval',
+            updateIntervalHint,
         );
         group.add(intervalRow);
 
@@ -140,6 +154,7 @@ export default class DeepSeekBalancePrefs extends ExtensionPreferences {
 
         window.connect('close-request', () => {
             settings.disconnect(currencyChangedId);
+            settings.disconnect(intervalChangedId);
             apiKeyRow.text = '';
             return false;
         });

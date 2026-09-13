@@ -45,7 +45,7 @@ export async function requestJson<T>(
             const delay = retryDelayMs(error, attempt, options.isCancelled);
             if (delay === null) throw error;
 
-            await sleep(delay);
+            await sleep(delay, options.cancellable ?? null);
             if (options.isCancelled?.()) throw error;
 
             attempt++;
@@ -74,11 +74,10 @@ async function sendRequest<T>(
             new TextEncoder().encode(options.body),
         );
 
-    const bytes = await session.send_and_read_async(
-        message,
-        GLib.PRIORITY_DEFAULT,
-        options.cancellable ?? null,
-    );
+    const priority = GLib.PRIORITY_DEFAULT;
+    const cancellable = options.cancellable ?? null;
+    const readBytes = session.send_and_read_async.bind(session);
+    const bytes = await readBytes(message, priority, cancellable);
     const status = message.get_status();
 
     if (bytes.get_size() > MAX_BODY_BYTES)
@@ -124,12 +123,21 @@ function parseRetryAfter(message: Soup.Message): number | null {
     return Number.isFinite(seconds) && seconds >= 0 ? seconds : null;
 }
 
-function sleep(ms: number): Promise<void> {
+function sleep(ms: number, cancellable: Gio.Cancellable | null): Promise<void> {
     return new Promise((resolve) => {
-        GLib.timeout_add(GLib.PRIORITY_DEFAULT, ms, () => {
+        let cancelId = 0;
+        const sourceId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, ms, () => {
+            if (cancelId) cancellable?.disconnect(cancelId);
             resolve();
             return GLib.SOURCE_REMOVE;
         });
+
+        cancelId = cancellable
+            ? cancellable.connect(() => {
+                  GLib.Source.remove(sourceId);
+                  resolve();
+              })
+            : 0;
     });
 }
 

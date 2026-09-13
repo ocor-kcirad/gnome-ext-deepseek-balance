@@ -110,7 +110,6 @@ There is no test suite. Building requires `zip`, `glib-compile-schemas`, and
 - `src/lib/usage/` — provider-agnostic usage service
 - `src/lib/api-key-store.ts` — API key storage via the Secret Service
 - `src/lib/http.ts` — libsoup JSON helper
-- `src/lib/tooltip.ts` — hover tooltip
 - `src/schemas/` — GSettings schema (`refresh-interval`, `currency`)
 - `scripts/build.sh` — compiles TypeScript, schemas, translations, and resources, then zips the extension
 - `scripts/esbuild.js` — transpiles each `src/**/*.ts` to `dist/`

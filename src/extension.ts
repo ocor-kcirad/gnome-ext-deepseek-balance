@@ -73,6 +73,7 @@ export default class DeepSeekBalanceExtension extends Extension {
         this.client?.abort();
         this.client = null;
 
+        this.service?.destroy();
         this.service = null;
         this.store = null;
         this.settings = null;
