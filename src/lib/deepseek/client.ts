@@ -1,3 +1,4 @@
+import Gio from 'gi://Gio';
 import Soup from 'gi://Soup?version=3.0';
 
 import {requestJson} from '../http.js';
@@ -9,6 +10,7 @@ const REQUEST_TIMEOUT_SECONDS = 30;
 
 export class DeepSeekClient {
     private readonly session = new Soup.Session();
+    private readonly cancellable = new Gio.Cancellable();
     private aborted = false;
 
     constructor(private readonly getApiKey: () => Promise<string | null>) {
@@ -28,6 +30,7 @@ export class DeepSeekClient {
             `${BASE_URL}/user/balance`,
             {
                 headers: {Authorization: `Bearer ${apiKey}`},
+                cancellable: this.cancellable,
                 isCancelled: () => this.aborted,
             },
         );
@@ -37,6 +40,7 @@ export class DeepSeekClient {
 
     abort(): void {
         this.aborted = true;
+        this.cancellable.cancel();
         this.session.abort();
     }
 }

@@ -9,7 +9,8 @@ await esbuild.build({
     entryPoints: ['src/**/*.ts'],
     outdir: 'dist/',
     platform: 'neutral',
-    format: 'esm'
+    format: 'esm',
+    target: 'es2022',
 });
 
 async function removeEmptyFiles(dir) {

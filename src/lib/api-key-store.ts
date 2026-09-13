@@ -1,6 +1,7 @@
 import Gio from 'gi://Gio';
 import Secret from 'gi://Secret';
 
+// Promisify once at module scope so it runs before any method is called.
 // @girs types these as promises, but GJS only returns promises once promisified.
 Gio._promisify(Secret, 'password_lookup', 'password_lookup_finish');
 Gio._promisify(Secret, 'password_store', 'password_store_finish');
@@ -21,14 +22,14 @@ export class ApiKeyStore {
     private service: Secret.Service | null | undefined;
 
     async getApiKey(): Promise<string | null> {
-        this.ensureService();
+        await this.ensureService();
 
         const apiKey = await Secret.password_lookup(SCHEMA, ATTRIBUTES, null);
         return apiKey ? apiKey : null;
     }
 
     async setApiKey(apiKey: string): Promise<void> {
-        this.ensureService();
+        await this.ensureService();
 
         await Secret.password_store(
             SCHEMA,
@@ -41,21 +42,28 @@ export class ApiKeyStore {
     }
 
     async clearApiKey(): Promise<void> {
-        this.ensureService();
+        await this.ensureService();
 
         await Secret.password_clear(SCHEMA, ATTRIBUTES, null);
     }
 
-    private ensureService(): void {
+    private async ensureService(): Promise<void> {
         if (this.service === undefined) {
-            try {
-                this.service = Secret.Service.get_sync(
-                    Secret.ServiceFlags.NONE,
-                    null,
-                );
-            } catch {
-                this.service = null;
-            }
+            this.service = await new Promise<Secret.Service | null>(
+                (resolve) => {
+                    Secret.Service.get(
+                        Secret.ServiceFlags.NONE,
+                        null,
+                        (_source, result) => {
+                            try {
+                                resolve(Secret.Service.get_finish(result));
+                            } catch {
+                                resolve(null);
+                            }
+                        },
+                    );
+                },
+            );
         }
 
         if (this.service === null)

@@ -1,3 +1,4 @@
+import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
 import Soup from 'gi://Soup?version=3.0';
 
@@ -5,6 +6,7 @@ export interface HttpRequestOptions {
     method?: string;
     headers?: Record<string, string>;
     body?: string;
+    cancellable?: Gio.Cancellable;
     isCancelled?: () => boolean;
 }
 
@@ -75,7 +77,7 @@ async function sendRequest<T>(
     const bytes = await session.send_and_read_async(
         message,
         GLib.PRIORITY_DEFAULT,
-        null,
+        options.cancellable ?? null,
     );
     const status = message.get_status();
 

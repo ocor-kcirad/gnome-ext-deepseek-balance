@@ -8,7 +8,9 @@ import {ApiKeyStore} from './lib/api-key-store.js';
 import {errorMessage} from './lib/error-message.js';
 
 export default class DeepSeekBalancePrefs extends ExtensionPreferences {
-    override fillPreferencesWindow(window: Adw.PreferencesWindow): void {
+    override async fillPreferencesWindow(
+        window: Adw.PreferencesWindow,
+    ): Promise<void> {
         const settings = this.getSettings();
         const store = new ApiKeyStore();
 
@@ -106,14 +108,20 @@ export default class DeepSeekBalancePrefs extends ExtensionPreferences {
         group.add(intervalRow);
 
         const currencyValues = ['', 'CNY', 'USD'];
+        const storedCurrency = settings.get_string('currency');
+        if (storedCurrency && !currencyValues.includes(storedCurrency))
+            currencyValues.push(storedCurrency);
+
         const currencyRow = new Adw.ComboRow({
             title: 'Display currency',
             subtitle: 'Which balance to show when several are available',
-            model: Gtk.StringList.new(['Auto', 'CNY', 'USD']),
+            model: Gtk.StringList.new(
+                currencyValues.map((value) => value || 'Auto'),
+            ),
         });
         currencyRow.selected = Math.max(
             0,
-            currencyValues.indexOf(settings.get_string('currency')),
+            currencyValues.indexOf(storedCurrency),
         );
         currencyRow.connect('notify::selected', () => {
             settings.set_string(
@@ -123,7 +131,15 @@ export default class DeepSeekBalancePrefs extends ExtensionPreferences {
         });
         group.add(currencyRow);
 
+        const currencyChangedId = settings.connect('changed::currency', () => {
+            const index = currencyValues.indexOf(
+                settings.get_string('currency'),
+            );
+            if (index >= 0) currencyRow.selected = index;
+        });
+
         window.connect('close-request', () => {
+            settings.disconnect(currencyChangedId);
             apiKeyRow.text = '';
             return false;
         });

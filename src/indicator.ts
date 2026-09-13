@@ -27,17 +27,17 @@ export class UsageIndicator extends PanelMenu.Button {
 
     private readonly panelLabel: St.Label;
     private readonly statusItem: PopupMenu.PopupMenuItem;
-    private readonly statusIcon: St.Icon;
-    private readonly statusTooltip: Tooltip;
-    private readonly totalValueLabel: St.Label;
-    private readonly updatedItem: PopupMenu.PopupMenuItem;
-    private readonly currencyButton: St.Button;
-    private readonly currencyLabel: St.Label;
+    private statusIcon!: St.Icon;
+    private statusTooltip!: Tooltip;
+    private totalValueLabel!: St.Label;
+    private readonly updatedItem!: PopupMenu.PopupMenuItem;
+    private currencyButton!: St.Button;
+    private currencyLabel!: St.Label;
 
     private readonly linkIcon: St.Icon;
     private readonly stSettings = St.Settings.get();
     private readonly colorSchemeId: number;
-    private readonly updatedTimerId: number;
+    private readonly _updatedTimerId: number;
     private currency = '';
     private snapshot: UsageSnapshot = {
         balance: null,
@@ -67,43 +67,73 @@ export class UsageIndicator extends PanelMenu.Button {
         });
         this.add_child(this.panelLabel);
 
-        this.statusItem = new PopupMenu.PopupMenuItem('Status:');
-        this.statusItem.label.x_expand = true;
-        this.statusItem.track_hover = true;
+        this.statusItem = this.buildStatusItem();
+        this.popupMenu.addMenuItem(this.statusItem);
+        this.popupMenu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
+
+        this.popupMenu.box.add_child(this.buildTotalBox());
+        this.popupMenu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
+
+        this.updatedItem = this.buildUpdatedItem();
+        this.popupMenu.addMenuItem(this.updatedItem);
+
+        this._updatedTimerId = GLib.timeout_add_seconds(
+            GLib.PRIORITY_DEFAULT,
+            30,
+            () => {
+                this.updateUpdatedLabel();
+                return GLib.SOURCE_CONTINUE;
+            },
+        );
+
+        this.update(this.service.getSnapshot());
+    }
+
+    private openUsagePage(): void {
+        try {
+            Gio.AppInfo.launch_default_for_uri(USAGE_URL, null);
+        } catch (error) {
+            logError(error as object, 'Failed to open the DeepSeek usage page');
+            Main.notify(
+                'DeepSeek Balance',
+                'Could not open the DeepSeek usage page.',
+            );
+        }
+    }
+
+    private buildStatusItem(): PopupMenu.PopupMenuItem {
+        const item = new PopupMenu.PopupMenuItem('Status:');
+        item.label.x_expand = true;
+        item.track_hover = true;
+
         this.statusIcon = new St.Icon({
             icon_name: STATUS_ICON,
             icon_size: 16,
             style_class: 'deepseek-status-icon',
         });
-        this.statusItem.add_child(this.statusIcon);
+        item.add_child(this.statusIcon);
 
         const linkButton = new St.Button({
-            child: this.linkIcon,
             style_class: 'deepseek-action-button deepseek-icon-button',
         });
+        linkButton.set_child(this.linkIcon);
         linkButton.connect('clicked', () => {
-            try {
-                Gio.AppInfo.launch_default_for_uri(USAGE_URL, null);
-            } catch (error) {
-                logError(error as object, 'Failed to open the DeepSeek usage page');
-                Main.notify(
-                    'DeepSeek Balance',
-                    'Could not open the DeepSeek usage page.',
-                );
-            }
+            this.openUsagePage();
         });
-        this.statusItem.add_child(linkButton);
+        item.add_child(linkButton);
 
-        this.statusTooltip = new Tooltip(this.statusItem);
-        this.popupMenu.addMenuItem(this.statusItem);
-        this.popupMenu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
+        this.statusTooltip = new Tooltip(item);
+        return item;
+    }
 
+    private buildTotalBox(): St.BoxLayout {
         const totalBox = new St.BoxLayout({
-            vertical: true,
+            orientation: Clutter.Orientation.VERTICAL,
             x_expand: true,
             reactive: true,
             style_class: 'deepseek-total',
         });
+
         const headingRow = new St.BoxLayout({
             x_expand: true,
             reactive: true,
@@ -117,21 +147,23 @@ export class UsageIndicator extends PanelMenu.Button {
                 style_class: 'deepseek-total-heading',
             }),
         );
+
         this.currencyLabel = new St.Label({
             text: '',
             y_align: Clutter.ActorAlign.CENTER,
         });
-        this.currencyButton = new St.Button({
-            child: this.currencyLabel,
+        const currencyButton = new St.Button({
             visible: false,
             style_class:
                 'deepseek-action-button deepseek-icon-button deepseek-currency-toggle',
         });
-        this.currencyButton.set_accessible_name('Switch currency');
-        this.currencyButton.connect('clicked', () => {
+        currencyButton.set_child(this.currencyLabel);
+        this.currencyButton = currencyButton;
+        currencyButton.set_accessible_name('Switch currency');
+        currencyButton.connect('clicked', () => {
             this.cycleCurrency();
         });
-        headingRow.add_child(this.currencyButton);
+        headingRow.add_child(currencyButton);
         totalBox.add_child(headingRow);
 
         this.totalValueLabel = new St.Label({
@@ -142,30 +174,20 @@ export class UsageIndicator extends PanelMenu.Button {
             reactive: true,
         });
         totalBox.add_child(this.totalValueLabel);
-        this.popupMenu.box.add_child(totalBox);
 
-        this.popupMenu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
+        return totalBox;
+    }
 
-        this.updatedItem = new PopupMenu.PopupMenuItem('Updated never');
-        this.updatedItem.label.x_expand = true;
-        this.updatedItem.label.x_align = Clutter.ActorAlign.CENTER;
-        this.updatedItem.label.add_style_class_name('deepseek-updated');
-        this.updatedItem.set_accessible_name('Refresh balance');
-        this.updatedItem.connect('activate', () => {
+    private buildUpdatedItem(): PopupMenu.PopupMenuItem {
+        const item = new PopupMenu.PopupMenuItem('Updated never');
+        item.label.x_expand = true;
+        item.label.x_align = Clutter.ActorAlign.CENTER;
+        item.label.add_style_class_name('deepseek-updated');
+        item.set_accessible_name('Refresh balance');
+        item.connect('activate', () => {
             this.service.refresh();
         });
-        this.popupMenu.addMenuItem(this.updatedItem);
-
-        this.updatedTimerId = GLib.timeout_add_seconds(
-            GLib.PRIORITY_DEFAULT,
-            30,
-            () => {
-                this.updateUpdatedLabel();
-                return GLib.SOURCE_CONTINUE;
-            },
-        );
-
-        this.update(this.service.getSnapshot());
+        return item;
     }
 
     private get popupMenu(): PopupMenu.PopupMenu {
@@ -190,25 +212,23 @@ export class UsageIndicator extends PanelMenu.Button {
     }
 
     override destroy(): void {
-        if (this.updatedTimerId) GLib.source_remove(this.updatedTimerId);
+        if (this._updatedTimerId) GLib.Source.remove(this._updatedTimerId);
         this.stSettings.disconnect(this.colorSchemeId);
         this.statusTooltip.destroy();
         super.destroy();
     }
 
     setCurrency(currency: string): void {
+        if (this.currency === currency) return;
+
         this.currency = currency;
         this.update(this.snapshot);
     }
 
     private cycleCurrency(): void {
         const infos = this.snapshot.balance?.balance_infos ?? [];
-        if (infos.length < 2) return;
-
-        const displayed = selectBalance(infos, this.currency);
-        const currencies = infos.map((info) => info.currency);
-        const index = displayed ? currencies.indexOf(displayed.currency) : -1;
-        const next = currencies[(index + 1) % currencies.length];
+        const next = nextCurrency(infos, selectBalance(infos, this.currency));
+        if (!next) return;
 
         this.onCurrencyChange(next);
         this.setCurrency(next);
@@ -224,10 +244,9 @@ export class UsageIndicator extends PanelMenu.Button {
 
         this.currencyLabel.set_text(info.currency);
 
-        const currencies = infos.map((entry) => entry.currency);
-        const index = currencies.indexOf(info.currency);
-        const next = currencies[(index + 1) % currencies.length];
-        this.currencyButton.set_accessible_name(`Show balance in ${next}`);
+        const next = nextCurrency(infos, info);
+        if (next)
+            this.currencyButton.set_accessible_name(`Show balance in ${next}`);
     }
 
     update(snapshot: UsageSnapshot): void {
@@ -262,6 +281,17 @@ function selectBalance(
     }
 
     return infos.length > 0 ? infos[0] : null;
+}
+
+function nextCurrency(
+    infos: BalanceInfo[],
+    current: BalanceInfo | null,
+): string | null {
+    if (infos.length < 2) return null;
+
+    const currencies = infos.map((info) => info.currency);
+    const index = current ? currencies.indexOf(current.currency) : -1;
+    return currencies[(index + 1) % currencies.length];
 }
 
 function panelText(info: BalanceInfo | null, error: string | null): string {

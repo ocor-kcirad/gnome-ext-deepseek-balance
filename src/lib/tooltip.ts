@@ -12,7 +12,7 @@ export class Tooltip extends St.Label {
 
     private readonly target: St.Widget;
     private readonly hoverId: number;
-    private timeoutId = 0;
+    private _timeoutId = 0;
 
     constructor(target: St.Widget) {
         super({style_class: 'dash-label', visible: false});
@@ -28,10 +28,10 @@ export class Tooltip extends St.Label {
     }
 
     private open(): void {
-        if (this.timeoutId) return;
+        if (this._timeoutId) return;
 
-        this.timeoutId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 300, () => {
-            this.timeoutId = 0;
+        this._timeoutId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 300, () => {
+            this._timeoutId = 0;
             this.show();
 
             const extents = this.target.get_transformed_extents();
@@ -54,9 +54,9 @@ export class Tooltip extends St.Label {
     }
 
     private close(): void {
-        if (this.timeoutId) {
-            GLib.source_remove(this.timeoutId);
-            this.timeoutId = 0;
+        if (this._timeoutId) {
+            GLib.Source.remove(this._timeoutId);
+            this._timeoutId = 0;
             return;
         }
 
@@ -67,9 +67,9 @@ export class Tooltip extends St.Label {
     }
 
     override destroy(): void {
-        if (this.timeoutId) {
-            GLib.source_remove(this.timeoutId);
-            this.timeoutId = 0;
+        if (this._timeoutId) {
+            GLib.Source.remove(this._timeoutId);
+            this._timeoutId = 0;
         }
         this.target.disconnect(this.hoverId);
         super.destroy();

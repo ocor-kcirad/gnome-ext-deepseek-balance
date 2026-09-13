@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <schemalist>
-    <schema id="org.gnome.shell.extensions.gnome-deepseek-balance" path="/org/gnome/shell/extensions/gnome-deepseek-balance/">
+    <schema id="org.gnome.shell.extensions.deepseek-balance" path="/org/gnome/shell/extensions/deepseek-balance/">
         <key name="refresh-interval" type="i">
             <default>300</default>
             <range min="60" max="3600"/>

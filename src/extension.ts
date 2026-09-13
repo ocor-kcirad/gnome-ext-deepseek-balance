@@ -57,7 +57,7 @@ export default class DeepSeekBalanceExtension extends Extension {
 
     override disable(): void {
         if (this.timeoutId !== 0) {
-            GLib.source_remove(this.timeoutId);
+            GLib.Source.remove(this.timeoutId);
             this.timeoutId = 0;
         }
 
@@ -80,7 +80,7 @@ export default class DeepSeekBalanceExtension extends Extension {
 
     private restartTimer(): void {
         if (this.timeoutId !== 0) {
-            GLib.source_remove(this.timeoutId);
+            GLib.Source.remove(this.timeoutId);
             this.timeoutId = 0;
         }
 
