@@ -176,7 +176,7 @@ export class UsageIndicator extends PanelMenu.Button {
     }
 
     private buildUpdatedItem(): PopupMenu.PopupMenuItem {
-        const item = new PopupMenu.PopupMenuItem('Updated never');
+        const item = new PopupMenu.PopupMenuItem('No updates yet');
         item.label.x_expand = true;
         item.label.x_align = Clutter.ActorAlign.CENTER;
         item.label.add_style_class_name('deepseek-updated');
@@ -203,8 +203,11 @@ export class UsageIndicator extends PanelMenu.Button {
     }
 
     private updateUpdatedLabel(): void {
+        const {updatedAt} = this.snapshot;
         this.updatedItem.label.set_text(
-            `Updated ${formatRelativeTime(this.snapshot.updatedAt)}`,
+            updatedAt === null
+                ? 'No updates yet'
+                : `Updated ${formatRelativeTime(updatedAt)}`,
         );
     }
 
@@ -318,9 +321,7 @@ function statusState(
         : {state: 'insufficient', text: 'Insufficient balance'};
 }
 
-function formatRelativeTime(updatedAt: number | null): string {
-    if (!updatedAt) return 'never';
-
+function formatRelativeTime(updatedAt: number): string {
     const seconds = Math.max(0, Math.floor((Date.now() - updatedAt) / 1000));
 
     if (seconds < 5) return 'just now';

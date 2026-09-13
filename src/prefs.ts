@@ -105,8 +105,8 @@ export default class DeepSeekBalancePrefs extends ExtensionPreferences {
             const belowRecommended =
                 settings.get_int('refresh-interval') < RECOMMENDED_INTERVAL;
             intervalRow.subtitle = belowRecommended
-                ? `<b>Warning:</b> ${RECOMMENDED_INTERVAL} s (5 min) or more is recommended to avoid DeepSeek API rate limits.`
-                : `Seconds between automatic balance updates. ${RECOMMENDED_INTERVAL} s (5 min) or more is recommended.`;
+                ? `<b>Warning:</b> ${RECOMMENDED_INTERVAL} s (5 min) or more is recommended to avoid DeepSeek API rate limiting.`
+                : `Seconds between automatic balance updates. ${RECOMMENDED_INTERVAL} s (5 min) or more is recommended to avoid API rate limiting.`;
         };
         settings.bind(
             'refresh-interval',

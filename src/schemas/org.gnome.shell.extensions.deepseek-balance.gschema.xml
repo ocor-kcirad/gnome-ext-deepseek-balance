@@ -5,7 +5,7 @@
             <default>300</default>
             <range min="60" max="3600"/>
             <summary>Refresh interval in seconds</summary>
-            <description>How often the extension refreshes usage data from the DeepSeek API. Values below 300 seconds are discouraged to avoid rate limits.</description>
+            <description>How often, in seconds, the extension refreshes balance data from the DeepSeek API. 300 seconds (5 minutes) is recommended to avoid API rate limiting.</description>
         </key>
         <key name="currency" type="s">
             <default>''</default>
