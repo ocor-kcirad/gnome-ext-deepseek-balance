@@ -29,7 +29,7 @@ export default class DeepSeekBalancePrefs extends ExtensionPreferences {
         store
             .getApiKey()
             .then((apiKey) => {
-                apiKeyRow.text = apiKey ?? '';
+                if (apiKeyRow.text === '') apiKeyRow.text = apiKey ?? '';
             })
             .catch((error) => {
                 window.add_toast(
@@ -45,13 +45,23 @@ export default class DeepSeekBalancePrefs extends ExtensionPreferences {
                 ? store.setApiKey(apiKey)
                 : store.clearApiKey();
 
-            action.catch((error) => {
-                window.add_toast(
-                    new Adw.Toast({
-                        title: `Could not save API key: ${errorMessage(error)}`,
-                    }),
-                );
-            });
+            action
+                .then(() => {
+                    window.add_toast(
+                        new Adw.Toast({
+                            title: apiKey
+                                ? 'API key saved'
+                                : 'API key removed',
+                        }),
+                    );
+                })
+                .catch((error) => {
+                    window.add_toast(
+                        new Adw.Toast({
+                            title: `Could not save API key: ${errorMessage(error)}`,
+                        }),
+                    );
+                });
         });
 
         const removeRow = new Adw.ActionRow({
@@ -94,6 +104,24 @@ export default class DeepSeekBalancePrefs extends ExtensionPreferences {
             Gio.SettingsBindFlags.DEFAULT,
         );
         group.add(intervalRow);
+
+        const currencyValues = ['', 'CNY', 'USD'];
+        const currencyRow = new Adw.ComboRow({
+            title: 'Display currency',
+            subtitle: 'Which balance to show when several are available',
+            model: Gtk.StringList.new(['Auto', 'CNY', 'USD']),
+        });
+        currencyRow.selected = Math.max(
+            0,
+            currencyValues.indexOf(settings.get_string('currency')),
+        );
+        currencyRow.connect('notify::selected', () => {
+            settings.set_string(
+                'currency',
+                currencyValues[currencyRow.selected] ?? '',
+            );
+        });
+        group.add(currencyRow);
 
         window.connect('close-request', () => {
             apiKeyRow.text = '';

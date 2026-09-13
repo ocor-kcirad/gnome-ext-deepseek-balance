@@ -13,6 +13,7 @@ export class UsageService {
     private readonly listeners = new Map<number, UsageListener>();
     private snapshot: UsageSnapshot = EMPTY_SNAPSHOT;
     private refreshing = false;
+    private pendingRefresh = false;
     private nextListenerId = 1;
 
     addProvider(provider: UsageProvider): void {
@@ -34,7 +35,12 @@ export class UsageService {
     }
 
     async refresh(): Promise<void> {
-        if (this.refreshing || this.providers.length === 0) return;
+        if (this.providers.length === 0) return;
+
+        if (this.refreshing) {
+            this.pendingRefresh = true;
+            return;
+        }
 
         this.refreshing = true;
 
@@ -42,19 +48,18 @@ export class UsageService {
             const results = await Promise.allSettled(
                 this.providers.map((provider) => provider.fetch()),
             );
-            const next: UsageSnapshot = {
-                ...this.snapshot,
-                updatedAt: Date.now(),
-                error: null,
-            };
+            const next: UsageSnapshot = {...this.snapshot, error: null};
             const errors: string[] = [];
+            let succeeded = false;
 
             for (const result of results) {
-                if (result.status === 'fulfilled')
+                if (result.status === 'fulfilled') {
                     Object.assign(next, result.value);
-                else errors.push(errorMessage(result.reason));
+                    succeeded = true;
+                } else errors.push(errorMessage(result.reason));
             }
 
+            if (succeeded) next.updatedAt = Date.now();
             next.error = errors.length > 0 ? errors.join('; ') : null;
             this.snapshot = next;
         } finally {
@@ -62,6 +67,11 @@ export class UsageService {
         }
 
         this.emit();
+
+        if (this.pendingRefresh) {
+            this.pendingRefresh = false;
+            void this.refresh();
+        }
     }
 
     private emit(): void {

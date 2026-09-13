@@ -18,12 +18,18 @@ const ATTRIBUTES = {purpose: 'deepseek-api-key'};
 const LABEL = 'DeepSeek Balance API key';
 
 export class ApiKeyStore {
+    private service: Secret.Service | null | undefined;
+
     async getApiKey(): Promise<string | null> {
+        this.ensureService();
+
         const apiKey = await Secret.password_lookup(SCHEMA, ATTRIBUTES, null);
         return apiKey ? apiKey : null;
     }
 
     async setApiKey(apiKey: string): Promise<void> {
+        this.ensureService();
+
         await Secret.password_store(
             SCHEMA,
             ATTRIBUTES,
@@ -35,6 +41,24 @@ export class ApiKeyStore {
     }
 
     async clearApiKey(): Promise<void> {
+        this.ensureService();
+
         await Secret.password_clear(SCHEMA, ATTRIBUTES, null);
+    }
+
+    private ensureService(): void {
+        if (this.service === undefined) {
+            try {
+                this.service = Secret.Service.get_sync(
+                    Secret.ServiceFlags.NONE,
+                    null,
+                );
+            } catch {
+                this.service = null;
+            }
+        }
+
+        if (this.service === null)
+            throw new Error('No system keyring (Secret Service) available.');
     }
 }

@@ -4,6 +4,7 @@ import GLib from 'gi://GLib';
 import GObject from 'gi://GObject';
 import St from 'gi://St';
 
+import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
 import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
 
@@ -25,6 +26,7 @@ export class UsageIndicator extends PanelMenu.Button {
     }
 
     private readonly panelLabel: St.Label;
+    private readonly statusItem: PopupMenu.PopupMenuItem;
     private readonly statusIcon: St.Icon;
     private readonly statusTooltip: Tooltip;
     private readonly totalValueLabel: St.Label;
@@ -34,6 +36,7 @@ export class UsageIndicator extends PanelMenu.Button {
     private readonly stSettings = St.Settings.get();
     private readonly colorSchemeId: number;
     private readonly updatedTimerId: number;
+    private currency = '';
     private snapshot: UsageSnapshot = {
         balance: null,
         updatedAt: null,
@@ -61,27 +64,35 @@ export class UsageIndicator extends PanelMenu.Button {
         });
         this.add_child(this.panelLabel);
 
-        const statusItem = new PopupMenu.PopupMenuItem('Status:');
-        statusItem.label.x_expand = true;
-        statusItem.track_hover = true;
+        this.statusItem = new PopupMenu.PopupMenuItem('Status:');
+        this.statusItem.label.x_expand = true;
+        this.statusItem.track_hover = true;
         this.statusIcon = new St.Icon({
             icon_name: STATUS_ICON,
             icon_size: 16,
             style_class: 'deepseek-status-icon',
         });
-        statusItem.add_child(this.statusIcon);
+        this.statusItem.add_child(this.statusIcon);
 
         const linkButton = new St.Button({
             child: this.linkIcon,
             style_class: 'deepseek-action-button deepseek-icon-button',
         });
         linkButton.connect('clicked', () => {
-            Gio.AppInfo.launch_default_for_uri(USAGE_URL, null);
+            try {
+                Gio.AppInfo.launch_default_for_uri(USAGE_URL, null);
+            } catch (error) {
+                logError(error as object, 'Failed to open the DeepSeek usage page');
+                Main.notify(
+                    'DeepSeek Balance',
+                    'Could not open the DeepSeek usage page.',
+                );
+            }
         });
-        statusItem.add_child(linkButton);
+        this.statusItem.add_child(linkButton);
 
-        this.statusTooltip = new Tooltip(statusItem);
-        this.popupMenu.addMenuItem(statusItem);
+        this.statusTooltip = new Tooltip(this.statusItem);
+        this.popupMenu.addMenuItem(this.statusItem);
         this.popupMenu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
 
         const totalBox = new St.BoxLayout({
@@ -160,13 +171,19 @@ export class UsageIndicator extends PanelMenu.Button {
         super.destroy();
     }
 
+    setCurrency(currency: string): void {
+        this.currency = currency;
+        this.update(this.snapshot);
+    }
+
     update(snapshot: UsageSnapshot): void {
         this.snapshot = snapshot;
         const {balance, error} = snapshot;
-        const info = selectBalance(balance?.balance_infos ?? []);
+        const info = selectBalance(balance?.balance_infos ?? [], this.currency);
 
         this.panelLabel.set_text(panelText(info, error));
-        const {state, text} = statusState(balance, error);
+        const {state, text} = statusState(balance, info, error);
+        this.statusItem.label.set_text(`Status: ${text}`);
         this.statusIcon.set_style_class_name(
             `deepseek-status-icon deepseek-status-${state}`,
         );
@@ -179,12 +196,23 @@ export class UsageIndicator extends PanelMenu.Button {
     }
 }
 
-function selectBalance(infos: BalanceInfo[]): BalanceInfo | null {
+function selectBalance(
+    infos: BalanceInfo[],
+    preferred: string,
+): BalanceInfo | null {
+    if (preferred) {
+        const match = infos.find((info) => info.currency === preferred);
+        if (match) return match;
+    }
+
     return infos.length > 0 ? infos[0] : null;
 }
 
 function panelText(info: BalanceInfo | null, error: string | null): string {
-    if (info) return formatAmount(info.currency, info.total_balance);
+    if (info)
+        return error
+            ? `⚠ ${formatAmount(info.currency, info.total_balance)}`
+            : formatAmount(info.currency, info.total_balance);
     if (error) return '⚠ DeepSeek';
     return 'DeepSeek';
 }
@@ -200,10 +228,11 @@ const STATUS_ICON = 'media-record-symbolic';
 
 function statusState(
     balance: UserBalance | null,
+    info: BalanceInfo | null,
     error: string | null,
 ): {state: StatusState; text: string} {
     if (error) return {state: 'error', text: `Error: ${error}`};
-    if (!balance) return {state: 'nodata', text: 'No data'};
+    if (!balance || !info) return {state: 'nodata', text: 'No data'};
     return balance.is_available
         ? {state: 'available', text: 'Available'}
         : {state: 'insufficient', text: 'Insufficient balance'};

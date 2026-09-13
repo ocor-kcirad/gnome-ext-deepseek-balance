@@ -36,13 +36,10 @@ export class Tooltip extends St.Label {
 
             const extents = this.target.get_transformed_extents();
             const xOffset = Math.floor((extents.get_width() - this.width) / 2);
-            const x = Math.clamp(
-                extents.get_x() + xOffset,
-                0,
-                global.stage.width - this.width,
-            );
+            const maxX = Math.max(0, global.stage.width - this.width);
+            const x = Math.clamp(extents.get_x() + xOffset, 0, maxX);
             const yOffset = this.get_theme_node().get_length('-y-offset');
-            const y = extents.get_y() - this.height - yOffset;
+            const y = Math.max(0, extents.get_y() - this.height - yOffset);
             this.set_position(x, y);
 
             this.opacity = 0;

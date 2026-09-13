@@ -31,6 +31,7 @@ export default class DeepSeekBalanceExtension extends Extension {
         this.service.addProvider(new DeepSeekBalanceProvider(this.client));
 
         this.indicator = new UsageIndicator(this.service, `${this.path}/icons`);
+        this.indicator.setCurrency(settings.get_string('currency'));
         Main.panel.addToStatusArea(this.uuid, this.indicator);
 
         this.serviceId = this.service.connect((snapshot) =>
@@ -40,6 +41,9 @@ export default class DeepSeekBalanceExtension extends Extension {
         this.settingsIds.push(
             settings.connect('changed::refresh-interval', () =>
                 this.restartTimer(),
+            ),
+            settings.connect('changed::currency', () =>
+                this.indicator?.setCurrency(settings.get_string('currency')),
             ),
         );
 

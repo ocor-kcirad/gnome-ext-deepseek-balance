@@ -7,5 +7,10 @@
             <summary>Refresh interval in seconds</summary>
             <description>How often the extension refreshes usage data from the DeepSeek API.</description>
         </key>
+        <key name="currency" type="s">
+            <default>''</default>
+            <summary>Preferred display currency</summary>
+            <description>Currency code to display; empty selects the first balance returned by the API.</description>
+        </key>
     </schema>
 </schemalist>

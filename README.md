@@ -86,6 +86,8 @@ You can also toggle it and open its settings from the GNOME Extensions app.
   Seahorse) to clean up.
 - **Refresh interval** — how often, in seconds, the balance is refreshed
   (60–3600).
+- **Display currency** — which balance to show when the API returns more than
+  one (Auto, CNY, or USD).
 
 ## Development
 
@@ -107,7 +109,7 @@ There is no test suite. Building requires `zip`, `glib-compile-schemas`, and
 - `src/lib/api-key-store.ts` — API key storage via the Secret Service
 - `src/lib/http.ts` — libsoup JSON helper
 - `src/lib/tooltip.ts` — hover tooltip
-- `src/schemas/` — GSettings schema (`refresh-interval`)
+- `src/schemas/` — GSettings schema (`refresh-interval`, `currency`)
 - `scripts/build.sh` — compiles TypeScript, schemas, translations, and resources, then zips the extension
 - `scripts/esbuild.js` — transpiles each `src/**/*.ts` to `dist/`
 - `metadata.json` — extension metadata (UUID, shell version, settings schema)
