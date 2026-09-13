@@ -10,9 +10,10 @@ const EMPTY_SNAPSHOT: UsageSnapshot = {
 
 export class UsageService {
     private readonly providers: UsageProvider[] = [];
-    private readonly listeners = new Set<UsageListener>();
+    private readonly listeners = new Map<number, UsageListener>();
     private snapshot: UsageSnapshot = EMPTY_SNAPSHOT;
     private refreshing = false;
+    private nextListenerId = 1;
 
     addProvider(provider: UsageProvider): void {
         this.providers.push(provider);
@@ -22,11 +23,14 @@ export class UsageService {
         return this.snapshot;
     }
 
-    connect(listener: UsageListener): () => void {
-        this.listeners.add(listener);
-        return () => {
-            this.listeners.delete(listener);
-        };
+    connect(listener: UsageListener): number {
+        const id = this.nextListenerId++;
+        this.listeners.set(id, listener);
+        return id;
+    }
+
+    disconnect(id: number): void {
+        this.listeners.delete(id);
     }
 
     async refresh(): Promise<void> {
@@ -61,6 +65,6 @@ export class UsageService {
     }
 
     private emit(): void {
-        for (const listener of this.listeners) listener(this.snapshot);
+        for (const listener of this.listeners.values()) listener(this.snapshot);
     }
 }

@@ -121,7 +121,8 @@ function build_extension_package() {
 
 	(
 		rm -f "$UUID".shell-extension.zip
-		cd "$JS_DIR" && zip -qr ../"$UUID".shell-extension.zip .
+		cd "$JS_DIR" && zip -qr ../"$UUID".shell-extension.zip . \
+			-x "schemas/gschemas.compiled"
 		zip -jq ../"$UUID".shell-extension.zip \
 			../metadata.json \
 			../LICENSE \

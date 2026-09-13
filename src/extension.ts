@@ -16,7 +16,7 @@ export default class DeepSeekBalanceExtension extends Extension {
     private client: DeepSeekClient | null = null;
     private service: UsageService | null = null;
     private indicator: UsageIndicator | null = null;
-    private disconnect: (() => void) | null = null;
+    private serviceId = 0;
     private settingsIds: number[] = [];
     private timeoutId = 0;
 
@@ -33,7 +33,7 @@ export default class DeepSeekBalanceExtension extends Extension {
         this.indicator = new UsageIndicator(this.service, `${this.path}/icons`);
         Main.panel.addToStatusArea(this.uuid, this.indicator);
 
-        this.disconnect = this.service.connect((snapshot) =>
+        this.serviceId = this.service.connect((snapshot) =>
             this.indicator?.update(snapshot),
         );
 
@@ -56,8 +56,8 @@ export default class DeepSeekBalanceExtension extends Extension {
         for (const id of this.settingsIds) this.settings?.disconnect(id);
         this.settingsIds = [];
 
-        this.disconnect?.();
-        this.disconnect = null;
+        if (this.service) this.service.disconnect(this.serviceId);
+        this.serviceId = 0;
 
         this.indicator?.destroy();
         this.indicator = null;
