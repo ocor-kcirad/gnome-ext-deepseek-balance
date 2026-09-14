@@ -9,6 +9,9 @@ dist/
 gschemas.compiled
 locale/
 
+# Local tooling
+venv/
+
 # Logs and caches
 npm-debug.log*
 yarn-error.log*
