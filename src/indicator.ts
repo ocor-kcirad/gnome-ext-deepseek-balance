@@ -196,7 +196,7 @@ export class UsageIndicator extends PanelMenu.Button {
             this.stSettings.color_scheme === St.SystemColorScheme.PREFER_LIGHT
                 ? 'light'
                 : 'dark';
-        const iconPath = `${this.iconsDir}/deepseek-${scheme}.svg`;
+        const iconPath = `${this.iconsDir}/balance-${scheme}.svg`;
         this.linkIcon.set_gicon(
             Gio.icon_new_for_string(iconPath) as unknown as St.Icon['gicon'],
         );

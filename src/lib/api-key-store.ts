@@ -7,16 +7,20 @@ Gio._promisify(Secret, 'password_lookup', 'password_lookup_finish');
 Gio._promisify(Secret, 'password_store', 'password_store_finish');
 Gio._promisify(Secret, 'password_clear', 'password_clear_finish');
 
-const SCHEMA = Secret.Schema.new(
-    'org.gnome.shell.extensions.gnome-deepseek-balance',
-    Secret.SchemaFlags.NONE,
-    {
-        purpose: Secret.SchemaAttributeType.STRING,
-    },
-);
-
 const ATTRIBUTES = {purpose: 'deepseek-api-key'};
 const LABEL = 'DeepSeek Balance API key';
+
+let schema: Secret.Schema | null = null;
+
+function getSchema(): Secret.Schema {
+    return (schema ??= Secret.Schema.new(
+        'org.gnome.shell.extensions.gnome-deepseek-balance',
+        Secret.SchemaFlags.NONE,
+        {
+            purpose: Secret.SchemaAttributeType.STRING,
+        },
+    ));
+}
 
 export class ApiKeyStore {
     private service: Secret.Service | null | undefined;
@@ -24,7 +28,11 @@ export class ApiKeyStore {
     async getApiKey(): Promise<string | null> {
         await this.ensureService();
 
-        const apiKey = await Secret.password_lookup(SCHEMA, ATTRIBUTES, null);
+        const apiKey = await Secret.password_lookup(
+            getSchema(),
+            ATTRIBUTES,
+            null,
+        );
         return apiKey ? apiKey : null;
     }
 
@@ -32,7 +40,7 @@ export class ApiKeyStore {
         await this.ensureService();
 
         await Secret.password_store(
-            SCHEMA,
+            getSchema(),
             ATTRIBUTES,
             Secret.COLLECTION_DEFAULT,
             LABEL,
@@ -44,7 +52,7 @@ export class ApiKeyStore {
     async clearApiKey(): Promise<void> {
         await this.ensureService();
 
-        await Secret.password_clear(SCHEMA, ATTRIBUTES, null);
+        await Secret.password_clear(getSchema(), ATTRIBUTES, null);
     }
 
     private async ensureService(): Promise<void> {

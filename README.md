@@ -2,6 +2,9 @@
 
 A GNOME Shell extension that shows your DeepSeek balance in the top bar.
 
+> Not affiliated with DeepSeek. "DeepSeek" is used only to describe the
+> service this extension integrates with.
+
 ## Features
 
 - Top-bar label showing your total balance

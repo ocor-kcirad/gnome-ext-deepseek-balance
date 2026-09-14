@@ -1,8 +1,8 @@
 {
   "name": "DeepSeek Balance",
-  "description": "A seamless top-bar indicator for DeepSeek balance monitoring. Fetches your balance from the DeepSeek API over the network using your stored API key.",
+  "description": "A seamless top-bar indicator for DeepSeek balance monitoring. Fetches your balance from the DeepSeek API over the network using your stored API key. Not affiliated with DeepSeek.",
   "uuid": "deepseek-balance@ocor-kcirad",
-  "url": "https://github.com/ocor-kcirad",
+  "url": "https://github.com/ocor-kcirad/gnome-ext-deepseek-balance",
   "shell-version": [
     "50"
   ],
